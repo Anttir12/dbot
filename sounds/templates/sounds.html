@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="row">
+    <div class="col"><h2>Dbot Sound board</h2></div>
+</div>
+<div class="row mt-4">
+    <div class="col-4">
+    <form method="post" enctype="multipart/form-data">
+        <div class="row">
+            <div class="col">
+                {% csrf_token %}
+                {{ form|crispy }}
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col">
+                <input type="submit" value="Submit">
+            </div>
+        </div>
+    </form>
+    </div>
+    <div class="col-8">
+        <div class="row">
+            <form action="{% url 'soundboard' %}" method="post" id="soundboard">
+            {% csrf_token %}
+            <div class="col-12">
+                <input id="override-sound" type="checkbox" name="override_sound" value="1">
+                <label for="override-sound">Override current sound</label>
+            </div>
+            <div class="col-12">
+                {% for sound in sounds %}
+                    <button style="width: 175px; height: 100px; margin:1em;" name="sound_id" class="btn btn-primary" type="submit" value="{{sound.id}}">{{sound.name}}</button>
+                {% endfor %}
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<script>
+    $(document).ready(function(){
+        $("#soundboard button").click(function(e){
+            e.preventDefault()
+            data = $("#soundboard").serializeArray()
+            data.push({"name": "sound_id", "value": $(this).val()})
+            console.log(data)
+            $.ajax({
+                type: "POST",
+                url: "{% url 'soundboard' %}",
+                data: data,
+                success: function(response) {
+                    console.log("Success")
+                },
+                error: function(response) {
+                    console.log("Error")
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

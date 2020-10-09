@@ -1,0 +1,7 @@
+[FORMAT]
+max-line-length=120
+
+disable=missing-module-docstring,
+        missing-class-docstring,
+        missing-function-docstring,
+        logging-format-interpolation

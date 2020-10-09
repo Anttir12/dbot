@@ -1,0 +1,39 @@
+version: "3.3"
+
+services:
+  dbot-web:
+    image: dbot:latest
+    command: daphne -b 0.0.0.0 -p 4322 dbot.asgi:application
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+    - "4322:4322"
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ~/dbot_data/uploads:/app/uploads
+
+  dbot-bot:
+    image: dbot:latest
+    command: celery -A dbot worker -l INFO --concurrency=1
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ~/dbot_data/uploads:/app/uploads
+
+  db:
+    image: postgres:12
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ~/dbot_data/db:/var/lib/postgresql/data
+
+  redis:
+    image: redis

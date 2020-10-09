@@ -1,0 +1,1 @@
+docker run --name dbot-db -e POSTGRES_DB=dbot-db -e POSTGRES_USER=dbot_user -e POSTGRES_PASSWORD=AS87KD11LPQA8U333 -p 5432:5432 -d postgres:12
