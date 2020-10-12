@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from asgiref.sync import sync_to_async
 from discord.ext import commands
@@ -69,6 +70,17 @@ class DiscoBotCommands(commands.Cog):
     @commands.command()
     async def this_channel(self, ctx: Context):
         await self.skills.set_channel(ctx)
+
+    @commands.command()
+    async def volume(self, ctx, volume: Optional[float] = None):
+        if volume is None:
+            await ctx.message.channel.send(f"Current volume is: {self.skills.volume}")
+            return
+        volume = float(volume)
+        if not (0 <= volume <= 1):
+            await ctx.message.channel.send("Volume has to be between 0 and 1")
+            return
+        self.skills.volume = volume
 
 
 def clean_url(url: str):

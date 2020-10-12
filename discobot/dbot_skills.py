@@ -2,7 +2,7 @@ import pytube
 import logging
 
 from asgiref.sync import sync_to_async
-from discord import FFmpegOpusAudio, Guild
+from discord import FFmpegPCMAudio, Guild, PCMVolumeTransformer
 from discord.abc import GuildChannel
 from discord.ext.commands import Context
 from django.db.models import Q
@@ -21,6 +21,7 @@ class DBotSkills:
     def __init__(self):
         self.guild: Guild = None
         self.channel = None
+        self.volume = 0.75
 
     async def play_sound(self, sound: str or SoundEffect, channel: GuildChannel or None, override=False, gif=True):
         logger.info("Playing sound")
@@ -49,10 +50,9 @@ class DBotSkills:
             await channel.send("Sound <{}> not found".format(sound))
             return
 
-
         if voice_client:
-            logger.info("voice_client found")
-            audio = FFmpegOpusAudio(sound_effect.sound_effect.path)
+            logger.info("voice_client found.")
+            audio = PCMVolumeTransformer(FFmpegPCMAudio(sound_effect.sound_effect.path), self.volume)
             if gif and channel and await sync_to_async(sound_effect.gifs.exists)():
                 gif = await sync_to_async(sound_effect.gifs.order_by("?").first)()
                 await channel.send(gif.url)
@@ -74,7 +74,7 @@ class DBotSkills:
             if self.guild.voice_client:
                 if self.channel:
                     self.channel.send("Now playing {}".format(filtered.title))
-                audio = FFmpegOpusAudio(download)
+                audio = PCMVolumeTransformer(FFmpegPCMAudio(download), self.volume)
                 self.guild.voice_client.play(audio)
         elif self.channel:
             await self.channel.send("I was unable to find a proper stream. Sorry!")
