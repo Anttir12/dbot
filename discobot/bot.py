@@ -3,6 +3,7 @@ import logging
 import os
 import threading
 from time import sleep
+from typing import Optional
 
 from django.conf import settings
 
@@ -11,9 +12,9 @@ from discobot.dbot import DiscoBot
 
 logger = logging.getLogger(__name__)
 
-
+# TODO this weird bot thing needs to be reworked
 class Bot:  # pylint: disable=too-few-public-methods
-    bot: DiscoBot or None = None
+    bot: Optional[DiscoBot] = None
     disco_bot_loop = None
     disco_bot_thread = None
 

@@ -44,3 +44,8 @@ class DiscoBot(commands.Bot):
             await message.channel.send('pong')
         else:
             await self.process_commands(message)
+
+    async def close(self):
+        if self.skills.guild.voice_client:
+            await self.skills.guild.voice_client.disconnect()
+        await super().close()
