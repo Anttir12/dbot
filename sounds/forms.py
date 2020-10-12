@@ -15,7 +15,7 @@ class SoundEffectUpload(forms.ModelForm):
     yt_url = forms.CharField(label="YouTube URL", max_length=200, required=True)
     start_ms = forms.IntegerField(label="Start time (ms)", required=False)
     end_ms = forms.IntegerField(label="End time (ms)", required=False)
-    tenor_url = forms.CharField(label="Tenor url")
+    tenor_url = forms.CharField(label="Tenor url", required=False)
 
     class Meta:
         model = SoundEffect
