@@ -1,3 +1,5 @@
+import shutil
+
 import pytube
 import logging
 
@@ -7,6 +9,7 @@ from discord.abc import GuildChannel
 from discord.ext.commands import Context
 from django.db.models import Q
 
+from sounds import utils
 from sounds.models import SoundEffect
 
 logger = logging.getLogger(__name__)
@@ -69,6 +72,8 @@ class DBotSkills:
         except Exception as broad_except:  # pylint: disable=broad-except
             raise SkillException("Unable to load streams from {}".format(yt_url)) from broad_except
         filtered = y_t.streams.filter(audio_codec="opus").order_by('bitrate').desc().first()
+        if not utils.enough_disk_space_for_yt_stream(filtered, "/tmp"):
+            raise SkillException("Not enough disk space to download yt stream")
         download = filtered.download("/tmp/streams")
         if filtered:
             if self.guild.voice_client:

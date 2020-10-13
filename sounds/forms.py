@@ -3,10 +3,12 @@ import magic
 import pytube
 
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from pydub import AudioSegment
 
+from . import utils
 from .models import SoundEffect
 
 
@@ -33,21 +35,22 @@ class SoundEffectUpload(forms.ModelForm):
 
     def clean_yt_url(self):
         url = self.cleaned_data["yt_url"]
-        self.stream = pytube.YouTube(url).streams \
-            .filter(only_audio=True, audio_codec="opus").order_by("abr").desc().first()
+        self.stream = pytube.YouTube(url).streams.filter(
+            only_audio=True, audio_codec="opus").order_by("abr").desc().first()
         if not self.stream:
-            raise ValidationError("Unable to find proper stream",
-                                  params={"yt_url": url})
+            raise ValidationError("Unable to find proper stream", params={"yt_url": url})
         return url
 
     def clean_tenor_url(self):
-        if not self.cleaned_data["tenor_url"].startswith("https://tenor.com/view/"):
+        if self.cleaned_data["tenor_url"] and not self.cleaned_data["tenor_url"].startswith("https://tenor.com/view/"):
             raise ValidationError("Does not look like a valid tenor url",
                                   params={"tenor_url": self.cleaned_data["tenor_url"]})
         return self.cleaned_data["tenor_url"]
 
     def clean(self):
         # Download video
+        if not utils.enough_disk_space_for_yt_stream(self.stream, "/tmp"):
+            raise ValidationError("Not enough disk space")
         path = self.stream.download("/tmp/streams/")
         start_ms = self.cleaned_data.get("start_ms")
         end_ms = self.cleaned_data.get("end_ms")

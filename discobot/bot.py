@@ -12,6 +12,7 @@ from discobot.dbot import DiscoBot
 
 logger = logging.getLogger(__name__)
 
+
 # TODO this weird bot thing needs to be reworked
 class Bot:  # pylint: disable=too-few-public-methods
     bot: Optional[DiscoBot] = None
