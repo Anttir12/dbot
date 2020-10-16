@@ -33,7 +33,7 @@ env = environ.Env(
     COMMAND_PREFIX=(str, "!"),
     DISCORD_TOKEN=(str, ""),
     DISCORD_GUILD=(str, ""),
-
+    MAX_CACHED_STREAMS=(int, 3),
 )
 
 
@@ -174,3 +174,5 @@ COMMAND_PREFIX = env("COMMAND_PREFIX")
 
 DISCORD_TOKEN = env("DISCORD_TOKEN")
 DISCORD_GUILD = env("DISCORD_GUILD")
+
+MAX_CACHED_STREAMS = env("MAX_CACHED_STREAMS")

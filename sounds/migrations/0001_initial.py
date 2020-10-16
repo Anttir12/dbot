@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('last_edited', models.DateTimeField(auto_now=True)),
-                ('sound_effect', models.FileField(upload_to='uploads/')),
+                ('sound_effect', models.FileField(upload_to='uploads/soundeffects')),
                 ('name', models.CharField(max_length=200, unique=True, validators=[sounds.models.validate_sound_effect_name])),
             ],
         ),
