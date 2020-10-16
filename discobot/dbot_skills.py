@@ -22,11 +22,12 @@ class SkillException(Exception):
 class DBotSkills:
 
     def __init__(self):
-        self.guild: Guild = None
+        self.guild: Optional[Guild] = None
         self.channel = None
         self.volume = 0.75
 
-    async def play_sound(self, sound: str or SoundEffect, channel: GuildChannel or None, override=False, gif=True):
+    async def play_sound(self, sound: Union[str, SoundEffect], channel: Optional[GuildChannel],
+                         override=False, gif=True):
         logger.info("Playing sound")
         voice_client = self.guild.voice_client
         if not voice_client:

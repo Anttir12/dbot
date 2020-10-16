@@ -77,7 +77,7 @@ class DiscoBotCommands(commands.Cog):
             await ctx.message.channel.send(f"Current volume is: {self.skills.volume}")
             return
         volume = float(volume)
-        if not (0 <= volume <= 1):
+        if not 0 <= volume <= 1:
             await ctx.message.channel.send("Volume has to be between 0 and 1")
             return
         self.skills.volume = volume

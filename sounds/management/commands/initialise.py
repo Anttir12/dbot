@@ -9,7 +9,7 @@ logger = logging.getLogger("Initialise")
 
 class Command(BaseCommand):
 
-    def handle(self, *args, **kwargs):
+    def handle(self, *args, **_):
         email = os.environ.get("SUPER_EMAIL")
         password = os.environ.get("SUPER_PASSWORD")
         if email and password:

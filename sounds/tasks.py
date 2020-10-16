@@ -9,13 +9,13 @@ from sounds.models import SoundEffect
 
 
 @worker_ready.connect
-def at_startup(sender, **kwargs):
+def at_startup(sender, **_):
     with sender.app.connection():
         sender.app.send_task("sounds.tasks.init_bot")
 
 
 @worker_process_shutdown.connect
-def shutdown(sender, **kwargs):
+def shutdown(sender, **_):  # pylint: disable=unused-argument
     if Bot.bot and not Bot.bot.is_closed():
         asyncio.run_coroutine_threadsafe(Bot.bot.close(), Bot.disco_bot_loop)
 
