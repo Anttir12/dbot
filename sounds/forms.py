@@ -67,11 +67,11 @@ class SoundEffectUpload(forms.ModelForm):
             clip.export(path, format="opus")
 
         size = os.path.getsize(path)
-        with open(path, 'rb') as ytaudio:
-            ytaudio.seek(0)
-            mime_type = magic.from_buffer(ytaudio.read(1024), mime=True)
-            ytaudio.seek(0)
-            file = InMemoryUploadedFile(ytaudio, "sound_effect", ytaudio.name, mime_type, size, None)
+        ytaudio = open(path, 'rb')
+        ytaudio.seek(0)
+        mime_type = magic.from_buffer(ytaudio.read(1024), mime=True)
+        ytaudio.seek(0)
+        file = InMemoryUploadedFile(ytaudio, "sound_effect", ytaudio.name, mime_type, size, None)
         os.remove(path)
         self.cleaned_data["sound_effect"] = file
         self.files["sound_effect"] = file
