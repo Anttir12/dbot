@@ -34,6 +34,7 @@ env = environ.Env(
     DISCORD_TOKEN=(str, ""),
     DISCORD_GUILD=(str, ""),
     MAX_CACHED_STREAMS=(int, 3),
+    FFMPEG_PATH=(str, "ffmpeg")
 )
 
 
@@ -176,3 +177,5 @@ DISCORD_TOKEN = env("DISCORD_TOKEN")
 DISCORD_GUILD = env("DISCORD_GUILD")
 
 MAX_CACHED_STREAMS = env("MAX_CACHED_STREAMS")
+
+FFMPEG_PATH = env("FFMPEG_PATH")

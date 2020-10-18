@@ -1,11 +1,11 @@
 import os
-import magic
+import sys
+
 import pytube
 
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from pydub import AudioSegment
 
 from . import utils
 from .models import SoundEffect
@@ -58,22 +58,15 @@ class SoundEffectUpload(forms.ModelForm):
         if start_ms is not None and end_ms is not None:
             if end_ms <= start_ms:
                 raise ValidationError("End time has to be bigger than start time")
-            audio = AudioSegment.from_file(path)
+            clip_data = utils.extract_clip_from_file(path, start_ms, end_ms)
             os.remove(path)
-            audio = audio[start_ms:end_ms]
-            if not os.path.exists("/tmp/clips"):
-                os.mkdir("/tmp/clips")
-            path = f"/tmp/clips/{name}.opus"
-            audio.export(path, format="opus")
-            del audio
-
-        size = os.path.getsize(path)
-        ytaudio = open(path, 'rb')
-        ytaudio.seek(0)
-        mime_type = magic.from_buffer(ytaudio.read(1024), mime=True)
-        ytaudio.seek(0)
-        file = InMemoryUploadedFile(ytaudio, "sound_effect", ytaudio.name, mime_type, size, None)
-        os.remove(path)
+            size = sys.getsizeof(clip_data)
+            file = InMemoryUploadedFile(clip_data, "sound_effect", name, None, size, None)
+        else:
+            size = os.path.getsize(path)
+            ytaudio = open(path, 'rb')
+            file = InMemoryUploadedFile(ytaudio, "sound_effect", ytaudio.name, None, size, None)
+            os.remove(path)
         self.cleaned_data["sound_effect"] = file
         self.files["sound_effect"] = file
         self.instance.sound_effect = file
