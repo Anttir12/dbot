@@ -60,11 +60,12 @@ class SoundEffectUpload(forms.ModelForm):
                 raise ValidationError("End time has to be bigger than start time")
             audio = AudioSegment.from_file(path)
             os.remove(path)
-            clip = audio[start_ms:end_ms]
+            audio = audio[start_ms:end_ms]
             if not os.path.exists("/tmp/clips"):
                 os.mkdir("/tmp/clips")
             path = f"/tmp/clips/{name}.opus"
-            clip.export(path, format="opus")
+            audio.export(path, format="opus")
+            del audio
 
         size = os.path.getsize(path)
         ytaudio = open(path, 'rb')
