@@ -73,6 +73,6 @@ class SoundEffectUpload(forms.ModelForm):
 
     def save(self, commit=True):
         sound_effect = super().save(commit)
-        if "tenor_url" in self.cleaned_data:
+        if self.cleaned_data.get("tenor_url"):
             sound_effect.gifs.create(url=self.cleaned_data["tenor_url"])
         return sound_effect
