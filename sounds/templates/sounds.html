@@ -23,7 +23,7 @@
     </div>
     <div class="col-8">
         <div class="row">
-            <form action="{% url 'soundboard' %}" method="post" id="soundboard">
+            <form action="{% url 'play_sound' %}" method="post" id="soundboard">
             {% csrf_token %}
             <div class="col-12">
                 <input id="override-sound" type="checkbox" name="override_sound" value="1">
@@ -50,7 +50,7 @@
             console.log(data)
             $.ajax({
                 type: "POST",
-                url: "{% url 'soundboard' %}",
+                url: "{% url 'play_sound' %}",
                 data: data,
                 success: function(response) {
                     console.log("Success")
