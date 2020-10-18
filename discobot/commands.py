@@ -20,6 +20,8 @@ class DiscoBotCommands(commands.Cog):
 
     @commands.command()
     async def join(self, ctx: Context):
+        if self.skills.guild.voice_client:
+            await self.skills.guild.voice_client.disconnect()
         if ctx.author.voice:
             await ctx.author.voice.channel.connect()
         else:
@@ -68,8 +70,11 @@ class DiscoBotCommands(commands.Cog):
         await ctx.message.channel.send("https://tenor.com/view/cowboy-screaming-big-enough-gif-11112189")
 
     @commands.command()
-    async def this_channel(self, ctx: Context):
-        await self.skills.set_channel(ctx)
+    async def this_channel(self, ctx: Context, leave=False):
+        if leave:
+            self.skills.channel = None
+        else:
+            await self.skills.set_channel(ctx)
 
     @commands.command()
     async def volume(self, ctx, volume: Optional[float] = None):
