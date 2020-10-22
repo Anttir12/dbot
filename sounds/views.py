@@ -1,12 +1,13 @@
 import logging
 
+from django.db.models import Q
 from django.views import View
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.contrib.admin.views.decorators import staff_member_required
 
 from . import tasks
-from .forms import SoundEffectUpload
+from .forms import SoundEffectUpload, SoundEffectFilter
 from .models import SoundEffect
 
 
@@ -16,8 +17,17 @@ logger = logging.getLogger(__name__)
 class Sounds(View):
     def get(self, request):
         form = SoundEffectUpload()
-        sounds = SoundEffect.objects.all()
-        return render(request, "sounds.html", {"form": form, "sounds": sounds})
+        filter_form = SoundEffectFilter(request.GET)
+        if filter_form.is_valid() and filter_form.cleaned_data["categories"]:
+            query = Q(categories__in=filter_form.cleaned_data["categories"])
+            if filter_form.cleaned_data["categoryless"]:
+                query = Q(query | Q(categories__isnull=True))
+            sounds = SoundEffect.objects.filter(query)
+        else:
+            sounds = SoundEffect.objects.all()
+        return render(request, "sounds.html", {"form": form,
+                                               "filter_form": filter_form,
+                                               "sounds": sounds})
 
     def post(self, request):
         form = SoundEffectUpload(request.POST, request.FILES)
@@ -25,7 +35,11 @@ class Sounds(View):
             form.save()
             form = SoundEffectUpload()
         sounds = SoundEffect.objects.all()
-        return render(request, "sounds.html", {"form": form, "sounds": sounds})
+        filter_form = SoundEffectFilter()
+        return render(request, "sounds.html", {"form": form,
+                                               "filter_form": filter_form,
+                                               "sounds": sounds,
+                                               })
 
 
 @staff_member_required

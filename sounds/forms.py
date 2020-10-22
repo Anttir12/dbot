@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from . import utils
-from .models import SoundEffect
+from .models import SoundEffect, Category
 
 
 class SoundEffectUpload(forms.ModelForm):
@@ -20,7 +20,10 @@ class SoundEffectUpload(forms.ModelForm):
 
     class Meta:
         model = SoundEffect
-        fields = ("name", "yt_url", "start_ms", "end_ms")
+        fields = ("name", "yt_url", "categories", "start_ms", "end_ms")
+        widgets = {
+            "categories": forms.CheckboxSelectMultiple()
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -76,3 +79,14 @@ class SoundEffectUpload(forms.ModelForm):
         if self.cleaned_data.get("tenor_url"):
             sound_effect.gifs.create(url=self.cleaned_data["tenor_url"])
         return sound_effect
+
+
+class SoundEffectFilter(forms.Form):
+
+    categories = forms.ModelMultipleChoiceField(queryset=Category.objects.all(), required=False,
+                                                widget=forms.CheckboxSelectMultiple)
+    categoryless = forms.BooleanField(label="Include sound effects without category", required=False)
+
+    def __init__(self, *args, **kwargs):
+        kwargs["prefix"] = "filter"
+        super().__init__(*args, **kwargs)
