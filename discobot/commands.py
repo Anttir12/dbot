@@ -43,6 +43,7 @@ class DiscoBotCommands(commands.Cog):
     @commands.command()
     async def list_sounds(self, ctx: Context):
         name_query = await sync_to_async(SoundEffect.objects.values_list)("name", flat=True)
+        name_query = await sync_to_async(name_query.order_by)("name")
         names = await sync_to_async(list)(name_query)
         await ctx.message.channel.send("Available sound effects:\n{}".format("\n".join(names)))
 
