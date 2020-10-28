@@ -11,4 +11,4 @@ redis==3.5.3
 django-environ==0.4.5
 whitenoise==5.2.0
 
-git+https://github.com/nficano/pytube.git@0d6d526c89615b39f61a9341fb395962e1fbbf68
+git+https://github.com/nficano/pytube.git@eec6f6481e6b68840142c94d464d00cbacfcd6aa
