@@ -7,19 +7,21 @@
 </div>
 <div class="row mt-4">
     <div class="col-lg-3 col-md-5 col-sm-6">
-    <form method="post" enctype="multipart/form-data">
-        <div class="row">
-            <div class="col">
-                {% csrf_token %}
-                {{ form|crispy }}
+        <form id="clip-uploader" method="post" enctype="multipart/form-data">
+            <div class="row">
+                <div class="col">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                </div>
             </div>
-        </div>
-        <div class="row mt-3">
-            <div class="col">
-                <input type="submit" value="Submit">
+            <div class="row mt-3">
+                <div class="col">
+                    <button id="upload-submit" class="btn btn-primary" type="submit" name="submit">Submit</button>
+                    <button id="upload-preview" class="btn btn-info" type="submit" name="preview">Preview</button>
+                </div>
             </div>
-        </div>
-    </form>
+        </form>
+        <div id="preview-audio"></div>
     </div>
     <div class="col-lg-9 col-md-7 col-sm-6">
         <div class="row">
@@ -73,21 +75,48 @@
 <script type="text/javascript">
 
     $(document).ready(function(){
+        $("#upload-preview").click(function(e){
+            e.preventDefault();
+            console.log("HEP!")
+            var form_data = $("#clip-uploader").serializeArray();
+            form_data.push({"name": "preview", "value": ""})
+            $.ajax({
+                url: "",
+                type: "POST",
+                cache: false,
+                data: form_data,
+                xhrFields:{
+                    responseType: 'blob'
+                },
+                success: function(data) {
+                    console.log(typeof data)
+                    console.log(data)
+                    var url = window.URL.createObjectURL(data);
+                    var html = `
+                    <audio controls autoplay controlsList="nodownload">
+                        <source src="${url}">
+                    </audio>
+                    `
+                    $("#preview-audio").html(html);
+                }
+            });
+        });
+
         $("#soundboard .play-button").click(function(e){
-            e.preventDefault()
-            var only_browser = $("#browser-sound").is(":checked")
+            e.preventDefault();
+            var only_browser = $("#browser-sound").is(":checked");
             if(only_browser){
-                var url = $(this).attr("data-url")
-                html = `
+                var url = $(this).attr("data-url");
+                var html = `
                 <audio controls autoplay controlsList="nodownload">
                     <source src="${url}">
                 </audio>
                 `
-                $("#audio-player").html(html)
+                $("#audio-player").html(html);
             }else{
-                var data = $("#soundboard").serializeArray()
-                data.push({"name": "sound_id", "value": $(this).attr("data-value")})
-                console.log(data)
+                var data = $("#soundboard").serializeArray();
+                data.push({"name": "sound_id", "value": $(this).attr("data-value")});
+                console.log(data);
                 $.ajax({
                     type: "POST",
                     url: "{% url 'play_sound' %}",
