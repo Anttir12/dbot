@@ -3,7 +3,7 @@ import logging
 from django.db.models import Q
 from django.views import View
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.contrib.admin.views.decorators import staff_member_required
 
 from . import tasks
@@ -41,6 +41,11 @@ class Sounds(View):
                                                "sounds": sounds,
                                                })
 
+@staff_member_required
+def sound_audio(request, sound_id):
+    sound: SoundEffect = get_object_or_404(SoundEffect, id=sound_id)
+    response = HttpResponse(sound.sound_effect.file)
+    return response
 
 @staff_member_required
 def play_sound(request):

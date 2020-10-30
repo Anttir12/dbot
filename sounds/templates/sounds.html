@@ -35,16 +35,22 @@
         <form action="{% url 'play_sound' %}" method="post" id="soundboard">
         <div class="row">
             {% csrf_token %}
-            <div class="col-12">
-                <input id="override-sound" type="checkbox" name="override_sound" value="1">
-                <label for="override-sound">Override current sound</label>
+            <div class="col">
+                <div class="d-inline-block" id="audio-player"></div>
+                <div class="d-inline-block">
+                    <input id="override-sound" type="checkbox" name="override_sound" value="1">
+                    <label for="override-sound">Override current sound</label>
+                    <input id="browser-sound" type="checkbox" name="browser" value="1">
+                    <label for="browser-sound">Play sound only in browser</label>
+                </div>
             </div>
 
         </div>
         <div class="row">
             {% for sound in sounds %}
                 <div class="col-xl-3 col-lg-4 col-sm-12 col-xs-12 mt-3" style="height:125px;">
-                    <div class="w-100 h-100 bg-primary text-center play-button" data-value="{{sound.id}}" style="cursor:pointer;">
+                    <div class="w-100 h-100 bg-primary text-center play-button" data-value="{{sound.id}}"
+                         data-url="{% url 'sound_audio' sound.id %}" style="cursor:pointer;">
                         {% for category in sound.categories.all|slice:3 %}
                             <div class="w-100" style="height: 25px; background-color:{{category.color}};">
                                 <span>{{category.name}}</span>
@@ -64,24 +70,36 @@
 {% endblock %}
 
 {% block extra_head %}
-<script>
+<script type="text/javascript">
+
     $(document).ready(function(){
         $("#soundboard .play-button").click(function(e){
             e.preventDefault()
-            data = $("#soundboard").serializeArray()
-            data.push({"name": "sound_id", "value": $(this).attr("data-value")})
-            console.log(data)
-            $.ajax({
-                type: "POST",
-                url: "{% url 'play_sound' %}",
-                data: data,
-                success: function(response) {
-                    console.log("Success")
-                },
-                error: function(response) {
-                    console.log("Error")
-                }
-            });
+            var only_browser = $("#browser-sound").is(":checked")
+            if(only_browser){
+                var url = $(this).attr("data-url")
+                html = `
+                <audio controls autoplay controlsList="nodownload">
+                    <source src="${url}">
+                </audio>
+                `
+                $("#audio-player").html(html)
+            }else{
+                var data = $("#soundboard").serializeArray()
+                data.push({"name": "sound_id", "value": $(this).attr("data-value")})
+                console.log(data)
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'play_sound' %}",
+                    data: data,
+                    success: function(response) {
+                        console.log("Success")
+                    },
+                    error: function(response) {
+                        console.log("Error")
+                    }
+                });
+            }
         });
     });
 </script>
