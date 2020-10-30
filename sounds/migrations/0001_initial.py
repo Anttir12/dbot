@@ -20,7 +20,8 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('last_edited', models.DateTimeField(auto_now=True)),
                 ('sound_effect', models.FileField(upload_to='uploads/soundeffects')),
-                ('name', models.CharField(max_length=200, unique=True, validators=[sounds.models.validate_sound_effect_name])),
+                ('name', models.CharField(max_length=200, unique=True,
+                                          validators=[sounds.models.validate_sound_effect_name])),
             ],
         ),
         migrations.CreateModel(
@@ -28,15 +29,18 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('url', models.CharField(max_length=300)),
-                ('sound_effect', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='gifs', to='sounds.soundeffect')),
+                ('sound_effect', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='gifs',
+                                                   to='sounds.soundeffect')),
             ],
         ),
         migrations.CreateModel(
             name='AlternativeName',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=200, unique=True, validators=[sounds.models.validate_alternative_name])),
-                ('sound_effect', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='sounds.soundeffect')),
+                ('name', models.CharField(max_length=200, unique=True,
+                                          validators=[sounds.models.validate_alternative_name])),
+                ('sound_effect', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                                   to='sounds.soundeffect')),
             ],
         ),
     ]

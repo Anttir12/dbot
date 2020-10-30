@@ -34,7 +34,7 @@ class Category(models.Model):
     color = models.CharField(max_length=64, choices=COLORS)
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
 
 class SoundEffect(models.Model):
@@ -47,7 +47,7 @@ class SoundEffect(models.Model):
     categories = models.ManyToManyField(Category, blank=True, related_name="sound_effects")
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
 
 class SoundEffectGif(models.Model):

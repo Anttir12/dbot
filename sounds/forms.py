@@ -1,14 +1,13 @@
 import os
 import sys
 
-import pytube
-
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from . import utils
 from .models import SoundEffect, Category
+from .utils import YtException
 
 
 class SoundEffectUpload(forms.ModelForm):
@@ -35,14 +34,6 @@ class SoundEffectUpload(forms.ModelForm):
             raise ValidationError(f"Sound Effect with name {name} already exists")
         return name
 
-    def clean_yt_url(self):
-        url = self.cleaned_data["yt_url"]
-        self.stream = pytube.YouTube(url).streams.filter(
-            only_audio=True, audio_codec="opus").order_by("abr").desc().first()
-        if not self.stream:
-            raise ValidationError("Unable to find proper stream", params={"yt_url": url})
-        return url
-
     def clean_tenor_url(self):
         if self.cleaned_data["tenor_url"] and not self.cleaned_data["tenor_url"].startswith("https://tenor.com/view/"):
             raise ValidationError("Does not look like a valid tenor url",
@@ -51,9 +42,11 @@ class SoundEffectUpload(forms.ModelForm):
 
     def clean(self):
         # Download video
-        if not utils.enough_disk_space_for_yt_stream(self.stream, "/tmp"):
-            raise ValidationError("Not enough disk space")
-        path = self.stream.download("/tmp/streams/")
+        try:
+            cached_stream = utils.get_stream(self.cleaned_data["yt_url"])
+            path = cached_stream.file.path
+        except YtException as exec:
+            raise ValidationError("Something wrong with the youtube url?") from exec
         start_ms = self.cleaned_data.get("start_ms")
         end_ms = self.cleaned_data.get("end_ms")
         name = self.cleaned_data["name"]
@@ -62,14 +55,12 @@ class SoundEffectUpload(forms.ModelForm):
             if end_ms <= start_ms:
                 raise ValidationError("End time has to be bigger than start time")
             clip_data = utils.extract_clip_from_file(path, start_ms, end_ms)
-            os.remove(path)
             size = sys.getsizeof(clip_data)
             file = InMemoryUploadedFile(clip_data, "sound_effect", name, None, size, None)
         else:
             size = os.path.getsize(path)
             ytaudio = open(path, 'rb')
             file = InMemoryUploadedFile(ytaudio, "sound_effect", ytaudio.name, None, size, None)
-            os.remove(path)
         self.cleaned_data["sound_effect"] = file
         self.files["sound_effect"] = file
         self.instance.sound_effect = file

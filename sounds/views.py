@@ -32,8 +32,12 @@ class Sounds(View):
     def post(self, request):
         form = SoundEffectUpload(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
-            form = SoundEffectUpload()
+            if "preview" in request.POST:
+                preview_file = form.instance.sound_effect.file.file
+                return HttpResponse(preview_file, content_type="audio/ogg")
+            else:
+                form.save()
+                form = SoundEffectUpload()
         sounds = SoundEffect.objects.all()
         filter_form = SoundEffectFilter()
         return render(request, "sounds.html", {"form": form,
@@ -41,11 +45,13 @@ class Sounds(View):
                                                "sounds": sounds,
                                                })
 
+
 @staff_member_required
-def sound_audio(request, sound_id):
+def sound_audio(_, sound_id):
     sound: SoundEffect = get_object_or_404(SoundEffect, id=sound_id)
     response = HttpResponse(sound.sound_effect.file)
     return response
+
 
 @staff_member_required
 def play_sound(request):
