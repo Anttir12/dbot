@@ -25,6 +25,7 @@ class Sounds(View):
             sounds = SoundEffect.objects.filter(query)
         else:
             sounds = SoundEffect.objects.all()
+        sounds = sounds.order_by("categories__name")
         return render(request, "sounds.html", {"form": form,
                                                "filter_form": filter_form,
                                                "sounds": sounds})
