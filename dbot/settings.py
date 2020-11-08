@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'django_extensions',
     'django_cleanup.apps.CleanupConfig',
+    'colorfield',
 ]
 
 MIDDLEWARE = [

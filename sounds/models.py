@@ -1,5 +1,6 @@
 import logging
 
+from colorfield.fields import ColorField
 from django.conf import settings
 from django.db import models
 from django.core.exceptions import ValidationError
@@ -17,21 +18,10 @@ def validate_sound_effect_name(name):
         raise ValidationError(f"{name} must not exist in AlternativeNames")
 
 
-COLORS = (("lightSalmon", "Red"),
-          ("steelBlue", "SteelBlue"),
-          ("paleGreen", "Green"),
-          ("lemonChiffon", "Yellow"),
-          ("gainsBoro", "Gray"),
-          ("plum", "Violet"),
-          ("orchid", "Orchid"),
-          ("coral", "Orange"),
-          ("mediumSlateBlue", "Purple"))
-
-
 class Category(models.Model):
     objects = models.Manager()
     name = models.CharField(max_length=128, unique=True, null=False)
-    color = models.CharField(max_length=64, choices=COLORS)
+    color_code = ColorField(null=False)
 
     def __str__(self):
         return str(self.name)

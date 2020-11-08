@@ -10,5 +10,5 @@ celery==5.0.0
 redis==3.5.3
 django-environ==0.4.5
 whitenoise==5.2.0
-
+django-colorfield==0.3.2
 git+https://github.com/nficano/pytube.git@eec6f6481e6b68840142c94d464d00cbacfcd6aa

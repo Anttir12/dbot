@@ -54,7 +54,7 @@
                     <div class="w-100 h-100 bg-primary text-center play-button" data-value="{{sound.id}}"
                          data-url="{% url 'sound_audio' sound.id %}" style="cursor:pointer;">
                         {% for category in sound.categories.all|slice:3 %}
-                            <div class="w-100" style="height: 25px; background-color:{{category.color}};">
+                            <div class="w-100" style="height: 25px; background-color:{{category.color_code}};">
                                 <span>{{category.name}}</span>
                             </div>
                         {% endfor %}
