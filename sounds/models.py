@@ -22,6 +22,7 @@ class Category(models.Model):
     objects = models.Manager()
     name = models.CharField(max_length=128, unique=True, null=False)
     color_code = ColorField(null=False)
+    text_color_code = ColorField(null=False, default="#000000")
 
     def __str__(self):
         return str(self.name)
