@@ -15,14 +15,19 @@ logger = logging.getLogger(__name__)
 
 
 class Sounds(View):
+
     def get(self, request):
         form = SoundEffectUpload()
-        filter_form = SoundEffectFilter(request.GET)
-        if filter_form.is_valid() and filter_form.cleaned_data["categories"]:
-            query = Q(categories__in=filter_form.cleaned_data["categories"])
+        filter_form = SoundEffectFilter(request.user, request.GET)
+        if filter_form.is_valid():
+            query = Q()
+            if filter_form.cleaned_data["categories"]:
+                query = Q(categories__in=filter_form.cleaned_data["categories"])
             if filter_form.cleaned_data["categoryless"]:
                 query = Q(query | Q(categories__isnull=True))
             sounds = SoundEffect.objects.filter(query)
+            if filter_form.cleaned_data["favourite_list"]:
+                sounds = sounds.filter(favourite_lists__in=filter_form.cleaned_data["favourite_list"])
         else:
             sounds = SoundEffect.objects.all()
         sounds = sounds.order_by("categories__name")
@@ -40,7 +45,7 @@ class Sounds(View):
                 form.save()
                 form = SoundEffectUpload()
         sounds = SoundEffect.objects.all()
-        filter_form = SoundEffectFilter()
+        filter_form = SoundEffectFilter(request.user)
         return render(request, "sounds.html", {"form": form,
                                                "filter_form": filter_form,
                                                "sounds": sounds,

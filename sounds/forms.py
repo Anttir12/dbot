@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from . import utils
-from .models import SoundEffect, Category
+from .models import SoundEffect, Category, Favourites
 from .utils import YtException
 
 
@@ -78,6 +78,11 @@ class SoundEffectFilter(forms.Form):
                                                 widget=forms.CheckboxSelectMultiple)
     categoryless = forms.BooleanField(label="Include sound effects without category", required=False)
 
-    def __init__(self, *args, **kwargs):
+    favourite_list = forms.ModelMultipleChoiceField(queryset=Favourites.objects.filter(owner__isnull=True),
+                                                    required=False, widget=forms.CheckboxSelectMultiple)
+
+    def __init__(self, user, *args, **kwargs):
         kwargs["prefix"] = "filter"
         super().__init__(*args, **kwargs)
+        if user:
+            self.fields["favourite_list"].queryset = user.favourite_lists.all()
