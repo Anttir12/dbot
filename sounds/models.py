@@ -2,6 +2,7 @@ import logging
 
 from colorfield.fields import ColorField
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.db import models
 from django.core.exceptions import ValidationError
 
@@ -72,3 +73,17 @@ class CachedStream(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.file.path})"
+
+
+class Favourites(models.Model):
+
+    class Meta:
+        unique_together = [['owner', 'name']]
+
+    objects = models.Manager()
+    owner = models.ForeignKey(User, related_name="favourite_lists", on_delete=models.CASCADE)
+    name = models.CharField(max_length=50, null=False)
+    sound_effects = models.ManyToManyField(to=SoundEffect, related_name="favourite_lists")
+
+    def __str__(self):
+        return f"{self.name}"
