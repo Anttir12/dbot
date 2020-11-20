@@ -21,7 +21,7 @@ env = environ.Env(
     # set casting, default value
     DEBUG=(bool, False),
     SECRET_KEY=(str, '#ar#b0j$id-m17@y7a4koc2ihtzdykexj+0_=7-ys!g9-txm3='),
-    ALLOWED_HOSTS=(list, ["localhost"]),
+    ALLOWED_HOSTS=(list, ["localhost", "127.0.0.1"]),
     DATABASE_ENGINE=(str, 'django.db.backends.postgresql'),
     DATABASE_NAME=(str, "dbot-db"),
     DATABASE_USER=(str, 'dbot_user'),
@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'django_cleanup.apps.CleanupConfig',
     'colorfield',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -152,6 +153,8 @@ STATIC_URL = '/static/'
 
 STATIC_ROOT = env("STATIC_ROOT")
 
+APPEND_SLASH = False
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -180,3 +183,11 @@ DISCORD_GUILD = env("DISCORD_GUILD")
 MAX_CACHED_STREAMS = env("MAX_CACHED_STREAMS")
 
 FFMPEG_PATH = env("FFMPEG_PATH")
+
+# DRF
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ]
+}
