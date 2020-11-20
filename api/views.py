@@ -113,5 +113,5 @@ class BotPlaySound(APIView):
 
     def post(self, request, pk):
         get_object_or_404(models.SoundEffect, pk=pk)
-        override = True if request.POST.get() else False
+        override = True if request.POST.get("override") else False
         tasks.play_sound.delay(pk, override)
