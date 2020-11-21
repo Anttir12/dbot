@@ -17,3 +17,10 @@ class FavouritesSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Favourites
         fields = ["id", "name", "sound_effects"]
+
+    def validate(self, attrs):
+        owner = self.context["request"].user
+        name = attrs.get("name")
+        if self.Meta.model.objects.filter(owner=owner, name=name).exists():
+            raise serializers.ValidationError(f'Favourites list for owner "{owner}" with name "{name}" already exists')
+        return attrs
