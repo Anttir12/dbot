@@ -83,7 +83,7 @@ class Favourites(models.Model):
     objects = models.Manager()
     owner = models.ForeignKey(User, related_name="favourite_lists", on_delete=models.CASCADE)
     name = models.CharField(max_length=50, null=False)
-    sound_effects = models.ManyToManyField(to=SoundEffect, related_name="favourite_lists")
+    sound_effects = models.ManyToManyField(to=SoundEffect, related_name="favourite_lists", null=True)
 
     def __str__(self):
         return f"{self.name}"
