@@ -41,6 +41,9 @@ class SoundEffect(models.Model):
     def __str__(self):
         return str(self.name)
 
+    def clean_name(self):
+        return str(self.name).replace("_", " ")
+
 
 class SoundEffectGif(models.Model):
     objects = models.Manager()  # Not needed but only paid pycharm detects this without this :D
