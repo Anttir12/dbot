@@ -1,0 +1,33 @@
+{% extends "admin/change_form.html" %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <script>
+        document.addEventListener("DOMContentLoaded", function(event) {
+            document.getElementById('{{ opts.model_name }}_preview').addEventListener('click', function(event){
+                event.preventDefault();
+                let volume = document.getElementById("id_volume").value;
+                let new_html = `
+                <audio controls autoplay controlsList="nodownload">
+                    <source id="audio-source" src="{% url 'sound_audio' object_id %}?volume=${volume}">
+                </audio>
+                `
+                console.log("Volume: "+volume);
+                document.getElementById('audio-preview-wrapper').innerHTML = new_html;
+            });
+            let volume_input = document.getElementById("id_volume");
+            let volume_slider = document.getElementById("id_volume_slider")
+            volume_slider.oninput = function(event){volume_input.value = this.value};
+            volume_input.oninput = function(event){volume_slider.value = this.value};
+        });
+    </script>
+{% endblock %}
+
+{% block submit_buttons_bottom %}
+    <div id="audio-preview-wrapper">
+        <audio controls controlsList="nodownload">
+            <source id="audio-source" src="{% url 'sound_audio' object_id %}">
+        </audio>
+    </div>
+    {{ block.super }}
+{% endblock %}
