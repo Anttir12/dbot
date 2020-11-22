@@ -46,14 +46,18 @@ class SoundEffectAudio(APIView):
 
     def get(self, request, pk):
         """
-        Returns audio file of the sound_effect with content_type audio/ogg. You can also provide optional volume=<float>
-        query parameter. This can be used as a "preview" functionality for modifying the volume
+        Returns audio file of the sound_effect with content_type audio/ogg. You can also provide optional volume
+        query parameter (a float between 0.01 and 5). This can be used as a "preview" functionality for modifying the
+        volume
         """
         sound_effect = get_object_or_404(models.SoundEffect, pk=pk)
         vol = request.query_params.get("volume")
         if vol:
             try:
                 vol = float(vol)
+                if not (0.009 <= vol <= 5.01):
+                    raise serializers.serializers.ValidationError(f"Except vol to be float between 0.01 and 5 but "
+                                                                  f"it was {vol}")
             except ValueError:
                 raise serializers.serializers.ValidationError(f"Except vol to be float but it was {type(vol)}")
             file = utils.create_audio_file_modified_volume(sound_effect.sound_effect.path, vol)
