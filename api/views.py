@@ -46,7 +46,8 @@ class SoundEffectAudio(APIView):
 
     def get(self, request, pk):
         """
-        Returns audio file of the sound_effect with content_type audio/ogg
+        Returns audio file of the sound_effect with content_type audio/ogg. You can also provide optional volume=<float>
+        query parameter. This can be used as a "preview" functionality for modifying the volume
         """
         sound_effect = get_object_or_404(models.SoundEffect, pk=pk)
         vol = request.query_params.get("volume")
