@@ -1,0 +1,9 @@
+{% extends "admin/submit_line.html" %}
+{% load i18n admin_urls %}
+
+<div class="submit-row">
+{% block submit-row %}
+    {{ block.super}}
+    <input id="{{ opts.model_name }}_preview" type="submit" value="Preview" name="_preview" class="default" style="float: left; margin-right: 1em;">
+{% endblock %}
+</div>

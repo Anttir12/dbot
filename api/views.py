@@ -1,14 +1,14 @@
 from django.http import HttpResponse
 from rest_framework import permissions, status
 from rest_framework.exceptions import ValidationError
-from rest_framework.generics import get_object_or_404, ListAPIView, ListCreateAPIView, RetrieveAPIView, DestroyAPIView
+from rest_framework.generics import get_object_or_404, ListAPIView, ListCreateAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api import custom_permissions
+from api import custom_permissions, serializers
 from api.serializers import SoundEffectSerializer, FavouritesSerializer
 
-from sounds import models, tasks
+from sounds import models, tasks, utils
 
 
 class SoundEffectList(ListAPIView):
@@ -49,8 +49,27 @@ class SoundEffectAudio(APIView):
         Returns audio file of the sound_effect with content_type audio/ogg
         """
         sound_effect = get_object_or_404(models.SoundEffect, pk=pk)
-        response = HttpResponse(sound_effect.sound_effect.file, content_type="audio/ogg")
+        vol = request.query_params.get("volume")
+        if vol:
+            try:
+                vol = float(vol)
+            except ValueError:
+                raise serializers.serializers.ValidationError(f"Except vol to be float but it was {type(vol)}")
+            file = utils.create_audio_file_modified_volume(sound_effect.sound_effect.path, vol)
+        else:
+            file = sound_effect.sound_effect.file
+        response = HttpResponse(file, content_type="audio/ogg")
         return response
+
+    def patch(self, request, pk):
+        sound_effect = get_object_or_404(models.SoundEffect, pk=pk)
+        vol_param = request.data.get("volume")
+        try:
+            vol = float(vol_param)
+        except ValueError:
+            raise serializers.serializers.ValidationError(f"Expected vol to be float but it was {type(vol_param)}")
+        utils.modify_sound_effect_volume(sound_effect, vol)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class FavouritesList(ListCreateAPIView):
@@ -73,7 +92,7 @@ class FavouritesDetail(RetrieveAPIView):
 class FavouritesSoundEffects(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request, pk):
+    def get(self, _, pk):
         """
         Returns list of sound_effect in the favourites
         """
@@ -111,7 +130,7 @@ class FavouritesSoundEffects(APIView):
             raise ValidationError("sound_effect_id required")
         try:
             sound_effect_id = int(sound_effect_id)
-        except TypeError as e:
+        except ValueError as e:
             raise ValidationError("sound_effect_id has to be int") from e
         return get_object_or_404(models.SoundEffect, id=sound_effect_id)
 

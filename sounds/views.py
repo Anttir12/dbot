@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404
 from django.contrib.admin.views.decorators import staff_member_required
 
-from . import tasks
+from . import tasks, utils
 from .forms import SoundEffectUpload, SoundEffectFilter
 from .models import SoundEffect
 
@@ -41,9 +41,8 @@ class Sounds(View):
             if "preview" in request.POST:
                 preview_file = form.instance.sound_effect.file.file
                 return HttpResponse(preview_file, content_type="audio/ogg")
-            else:
-                form.save()
-                form = SoundEffectUpload()
+            form.save()
+            form = SoundEffectUpload()
         sounds = SoundEffect.objects.all()
         filter_form = SoundEffectFilter(request.user)
         return render(request, "sounds.html", {"form": form,
@@ -53,9 +52,22 @@ class Sounds(View):
 
 
 @staff_member_required
-def sound_audio(_, sound_id):
+def sound_audio(request, sound_id):
+    vol = request.GET.get("volume")
     sound: SoundEffect = get_object_or_404(SoundEffect, id=sound_id)
-    response = HttpResponse(sound.sound_effect.file)
+
+    if vol:
+        try:
+            vol = float(vol)
+            if 0.009 <= vol <= 5.001:
+                file = utils.create_audio_file_modified_volume(sound.sound_effect.path, vol)
+                response = HttpResponse(file, content_type="audio/ogg")
+            else:
+                raise ValueError()
+        except ValueError:
+            return HttpResponse(status=400)
+    else:
+        response = HttpResponse(sound.sound_effect.file)
     return response
 
 
