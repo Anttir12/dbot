@@ -12,6 +12,11 @@ class SoundEffectSerializer(serializers.ModelSerializer):
         fields = ["id", "created_at", "name", "categories"]
 
 
+class SoundEffectFromYTSerializer(serializers.ModelSerializer):
+
+    start_ms = serializers.
+
+
 class FavouritesSerializer(serializers.ModelSerializer):
 
     class Meta:

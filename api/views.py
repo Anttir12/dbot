@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from rest_framework import permissions, status
 from rest_framework.exceptions import ValidationError
-from rest_framework.generics import get_object_or_404, ListAPIView, ListCreateAPIView, RetrieveAPIView
+from rest_framework.generics import get_object_or_404, ListAPIView, ListCreateAPIView, RetrieveAPIView, CreateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -9,6 +9,7 @@ from api import custom_permissions, serializers
 from api.serializers import SoundEffectSerializer, FavouritesSerializer
 
 from sounds import models, tasks, utils
+from sounds.forms import SoundEffectUpload
 
 
 class SoundEffectList(ListAPIView):
@@ -24,6 +25,27 @@ class SoundEffectDetail(RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = SoundEffectSerializer
     queryset = models.SoundEffect.objects.all()
+
+
+class SoundEffectFromYT(CreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = SoundEffectFromYTSerializer
+
+    def get(self, request):
+        """
+        Returns preview of the clip taken from YT.
+        Required query parameters: yt_url (str), name (str)
+        Optional (but recommended!) parameters: start_ms(int), end_ms(int)
+        :param request:
+        :return:
+        """
+        form = SoundEffectUpload(request.GET)
+        if form.is_valid():
+            preview_file = form.instance.sound_effect.file.file
+            return HttpResponse(preview_file, content_type="audio/ogg")
+        return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request):
 
 
 class CategoryList(ListCreateAPIView):

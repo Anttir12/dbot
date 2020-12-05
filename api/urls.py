@@ -25,6 +25,7 @@ urlpatterns = [
     path('sound_effects/<int:pk>', views.SoundEffectDetail.as_view(), name="api_sound_effect"),
     path('sound_effects/<int:pk>/audio', views.SoundEffectAudio.as_view(), name="api_sound_effect_audio"),
 
+    path('sound_effects/from_yt', views.SoundEffectFromYT.as_view(), name="sound_effect_from_yt"),
 
     path('category/<str:category_name>/sound_effects', views.SoundEffectsByCategory.as_view(),
          name="api_sound_effects_by_category"),
