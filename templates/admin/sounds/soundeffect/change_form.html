@@ -2,6 +2,7 @@
 
 {% block extrahead %}
     {{ block.super }}
+    {% if adminform.form.instance.id %}
     <script>
         document.addEventListener("DOMContentLoaded", function(event) {
             document.getElementById('{{ opts.model_name }}_preview').addEventListener('click', function(event){
@@ -21,13 +22,16 @@
             volume_input.oninput = function(event){volume_slider.value = this.value};
         });
     </script>
+    {% endif %}
 {% endblock %}
 
 {% block submit_buttons_bottom %}
+   {% if adminform.form.instance.id %}
     <div id="audio-preview-wrapper">
         <audio controls controlsList="nodownload">
             <source id="audio-source" src="{% url 'sound_audio' object_id %}">
         </audio>
     </div>
+    {% endif %}
     {{ block.super }}
 {% endblock %}
