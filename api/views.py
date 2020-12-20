@@ -1,15 +1,18 @@
+from django.db import transaction
 from django.http import HttpResponse
-from rest_framework import permissions, status
+from drf_spectacular.utils import extend_schema
+from rest_framework import permissions
 from rest_framework.exceptions import ValidationError
-from rest_framework.generics import get_object_or_404, ListAPIView, ListCreateAPIView, RetrieveAPIView, CreateAPIView
+from rest_framework.generics import get_object_or_404, ListAPIView, ListCreateAPIView, RetrieveAPIView, CreateAPIView, \
+    UpdateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api import custom_permissions, serializers
-from api.serializers import SoundEffectSerializer, FavouritesSerializer
+from api import custom_permissions, custom_renderers
+from api.serializers import SoundEffectSerializer, FavouritesSerializer, SoundEffectFromYTSerializer, \
+    PlayBotSoundSerializer, SoundEffectAudioSerializer, SoundEffectAudioPreviewSerializer, FavouritesMinimalSerializer
 
-from sounds import models, tasks, utils
-from sounds.forms import SoundEffectUpload
+from sounds import models, utils
 
 
 class SoundEffectList(ListAPIView):
@@ -27,25 +30,27 @@ class SoundEffectDetail(RetrieveAPIView):
     queryset = models.SoundEffect.objects.all()
 
 
-class SoundEffectFromYT(CreateAPIView):
+class SoundEffectFromYT(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        serializer = SoundEffectFromYTSerializer(data=request.query_params, context={"request": request})
+        if serializer.is_valid(raise_exception=True):
+            sound_effect = serializer.create_sound_effect(save=False)
+            preview_file = sound_effect.sound_effect.file.file
+            return HttpResponse(preview_file, content_type="audio/ogg")
+
+
+class CreateSoundEffectFromYt(CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = SoundEffectFromYTSerializer
 
-    def get(self, request):
-        """
-        Returns preview of the clip taken from YT.
-        Required query parameters: yt_url (str), name (str)
-        Optional (but recommended!) parameters: start_ms(int), end_ms(int)
-        :param request:
-        :return:
-        """
-        form = SoundEffectUpload(request.GET)
-        if form.is_valid():
-            preview_file = form.instance.sound_effect.file.file
+    def get(self):
+        serializer = self.serializer_class()
+        if serializer.is_valid(raise_exception=True):
+            sound_effect = serializer.create_sound_effect(save=False)
+            preview_file = sound_effect.sound_effect.file.file
             return HttpResponse(preview_file, content_type="audio/ogg")
-        return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def post(self, request):
 
 
 class CategoryList(ListCreateAPIView):
@@ -63,45 +68,48 @@ class SoundEffectsByCategory(ListAPIView):
         return sound_effects
 
 
-class SoundEffectAudio(APIView):
+class SoundEffectAudio(UpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = SoundEffectAudioSerializer
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    @extend_schema(
+        responses={(200, 'audio/ogg')}
+    )
     def get(self, request, pk):
-        """
-        Returns audio file of the sound_effect with content_type audio/ogg. You can also provide optional volume
-        query parameter (a float between 0.01 and 5). This can be used as a "preview" functionality for modifying the
-        volume
-        """
+        """Returns audio file of the sound_effect with content_type audio/ogg. You can also provide optional volume
+       query parameter (a float between 0.01 and 5). This can be used as a "preview" functionality for modifying the
+       volume
+       """
+        serializer = self.serializer_class(data=request.query_params)
         sound_effect = get_object_or_404(models.SoundEffect, pk=pk)
-        vol = request.query_params.get("volume")
+        serializer.is_valid(raise_exception=True)
+        vol = serializer.validated_data.get("volume")
         if vol:
-            try:
-                vol = float(vol)
-                if not (0.009 <= vol <= 5.01):
-                    raise serializers.serializers.ValidationError(f"Except vol to be float between 0.01 and 5 but "
-                                                                  f"it was {vol}")
-            except ValueError:
-                raise serializers.serializers.ValidationError(f"Except vol to be float but it was {type(vol)}")
             file = utils.create_audio_file_modified_volume(sound_effect.sound_effect.path, vol)
         else:
             file = sound_effect.sound_effect.file
         response = HttpResponse(file, content_type="audio/ogg")
         return response
 
-    def patch(self, request, pk):
-        sound_effect = get_object_or_404(models.SoundEffect, pk=pk)
-        vol_param = request.data.get("volume")
-        try:
-            vol = float(vol_param)
-        except ValueError:
-            raise serializers.serializers.ValidationError(f"Expected vol to be float but it was {type(vol_param)}")
-        utils.modify_sound_effect_volume(sound_effect, vol)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    def get_object(self):
+        return models.SoundEffect.objects.get(id=self.kwargs[self.lookup_field])
+
+
+class SoundEffectAudioPreview(RetrieveAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    renderer_classes = [custom_renderers.AudioOGGRenderer]
+    serializer_class = SoundEffectAudioPreviewSerializer
+
+    def get_object(self):
+        return models.SoundEffect.objects.get(id=self.kwargs[self.lookup_field])
 
 
 class FavouritesList(ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = FavouritesSerializer
+    serializer_class = FavouritesMinimalSerializer
 
     def get_queryset(self):
         return models.Favourites.objects.filter(owner=self.request.user)
@@ -112,18 +120,18 @@ class FavouritesList(ListCreateAPIView):
 
 class FavouritesDetail(RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated, custom_permissions.FavouritesOwnerPermission]
-    serializer_class = FavouritesSerializer
+    serializer_class = FavouritesMinimalSerializer
     queryset = models.Favourites.objects.all()
 
 
 class FavouritesSoundEffects(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, _, pk):
+    def get(self, request, pk):
         """
         Returns list of sound_effect in the favourites
         """
-        favourites = get_object_or_404(models.Favourites, id=pk)
+        favourites = get_object_or_404(models.Favourites, id=pk, owner=request.user)
         serializer = SoundEffectSerializer(favourites.sound_effects.all(), many=True)
         return Response(serializer.data)
 
@@ -131,11 +139,13 @@ class FavouritesSoundEffects(APIView):
         """
         Add sound_effect to the favourites list
 
-        Expected body: {"sound_effect_id": <int:id>}
+        Expected body: {"sound_effects": <list[int:id]>}
         """
-        favourites = get_object_or_404(models.Favourites, id=pk)
-        sound_effect = self._get_sound_effect(request)
-        favourites.sound_effects.add(sound_effect)
+        favourites = get_object_or_404(models.Favourites, id=pk, owner=request.user)
+        sound_effects = self._get_sound_effects(request)
+        with transaction.atomic():
+            for sound_effect in sound_effects:
+                favourites.sound_effects.add(sound_effect)
         serializer = FavouritesSerializer(favourites)
         return Response(serializer.data)
 
@@ -143,33 +153,25 @@ class FavouritesSoundEffects(APIView):
         """
         Remove sound effect from the favourites list
 
-        Expected body: {"sound_effect_id": <int:id>}
+        Expected body: {"sound_effects": <list[int:id]>}
         """
         favourites = get_object_or_404(models.Favourites, id=pk)
-        sound_effect = self._get_sound_effect(request)
-        favourites.sound_effects.remove(sound_effect)
+        sound_effects = self._get_sound_effects(request)
+        with transaction.atomic():
+            for sound_effect in sound_effects:
+                favourites.sound_effects.remove(sound_effect)
         serializer = FavouritesSerializer(favourites)
         return Response(serializer.data)
 
-    def _get_sound_effect(self, request):
-        sound_effect_id = request.data.get("sound_effect_id")
-        if sound_effect_id is None:
-            raise ValidationError("sound_effect_id required")
-        try:
-            sound_effect_id = int(sound_effect_id)
-        except ValueError as e:
-            raise ValidationError("sound_effect_id has to be int") from e
-        return get_object_or_404(models.SoundEffect, id=sound_effect_id)
+    def _get_sound_effects(self, request):
+        sound_effects = request.data.get("sound_effects")
+        if sound_effects is None:
+            raise ValidationError("sound_effects required")
+        if not isinstance(sound_effects, list):
+            raise ValidationError("Expected list of sound effect IDs")
+        return models.SoundEffect.objects.filter(id__in=sound_effects)
 
 
-class BotPlaySound(APIView):
+class BotPlaySound(CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
-
-    def post(self, request, pk):
-        """
-        Request the bot to play sound effect
-        """
-        get_object_or_404(models.SoundEffect, pk=pk)
-        override = True if request.POST.get("override") else False
-        tasks.play_sound.delay(pk, override)
-        return Response({"bot": "ok"})
+    serializer_class = PlayBotSoundSerializer

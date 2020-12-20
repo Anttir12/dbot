@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
+import datetime
 import os
 from pathlib import Path
 
@@ -36,7 +37,7 @@ env = environ.Env(
     MAX_CACHED_STREAMS=(int, 3),
     FFMPEG_PATH=(str, "ffmpeg")
 )
-
+environ.Env.read_env()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
@@ -65,6 +66,7 @@ INSTALLED_APPS = [
     'colorfield',
     'rest_framework',
     'corsheaders',
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -187,19 +189,23 @@ MAX_CACHED_STREAMS = env("MAX_CACHED_STREAMS")
 FFMPEG_PATH = env("FFMPEG_PATH")
 
 # DRF
-
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ]
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 CORS_ALLOWED_ORIGINS = [
     "https://localhost:3000",
 ]
 
-# SSL/HTTPS
+if DEBUG:
+    # In debug mode keep the access token alive for a long time
+    SIMPLE_JWT = {'ACCESS_TOKEN_LIFETIME': datetime.timedelta(minutes=60)}
+    print(SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'])
 
+# SSL/HTTPS
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True

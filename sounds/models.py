@@ -32,6 +32,7 @@ class Category(models.Model):
 class SoundEffect(models.Model):
     objects = models.Manager()  # Not needed but only paid pycharm detects this without this :D
     created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     last_edited = models.DateTimeField(auto_now=True)
     sound_effect = models.FileField(null=False, blank=False, upload_to="uploads/soundeffects/")
     name = models.CharField(null=False, blank=False, max_length=200, unique=True,
@@ -86,7 +87,7 @@ class Favourites(models.Model):
     objects = models.Manager()
     owner = models.ForeignKey(User, related_name="favourite_lists", on_delete=models.CASCADE)
     name = models.CharField(max_length=50, null=False)
-    sound_effects = models.ManyToManyField(to=SoundEffect, related_name="favourite_lists", null=True)
+    sound_effects = models.ManyToManyField(to=SoundEffect, related_name="favourite_lists")
 
     def __str__(self):
         return f"{self.name}"
