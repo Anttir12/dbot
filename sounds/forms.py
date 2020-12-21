@@ -42,6 +42,8 @@ class SoundEffectUpload(forms.ModelForm):
 
     def clean(self):
         # Download video
+        if "yt_url" not in self.cleaned_data or "name" not in self.cleaned_data:
+            return
         try:
             cached_stream = utils.get_stream(self.cleaned_data["yt_url"])
             path = cached_stream.file.path

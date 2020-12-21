@@ -32,6 +32,7 @@ class Category(models.Model):
 class SoundEffect(models.Model):
     objects = models.Manager()  # Not needed but only paid pycharm detects this without this :D
     created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     last_edited = models.DateTimeField(auto_now=True)
     sound_effect = models.FileField(null=False, blank=False, upload_to="uploads/soundeffects/")
     name = models.CharField(null=False, blank=False, max_length=200, unique=True,
@@ -86,7 +87,34 @@ class Favourites(models.Model):
     objects = models.Manager()
     owner = models.ForeignKey(User, related_name="favourite_lists", on_delete=models.CASCADE)
     name = models.CharField(max_length=50, null=False)
-    sound_effects = models.ManyToManyField(to=SoundEffect, related_name="favourite_lists", null=True)
+    sound_effects = models.ManyToManyField(to=SoundEffect, related_name="favourite_lists")
 
     def __str__(self):
         return f"{self.name}"
+
+
+class DiscordUser(models.Model):
+    objects = models.Manager()
+    display_name = models.CharField(max_length=255, null=False, blank=False)
+    mention = models.CharField(max_length=255, null=False, blank=False, unique=True)
+    added_by = models.ForeignKey(User, related_name="added_discord_users", on_delete=models.SET_NULL, null=True)
+    auto_join = models.BooleanField(default=False)
+
+    def __str__(self):
+        return "{} ({})".format(self.display_name, self.mention)
+
+
+WELCOME = "welcome"
+GREETINGS = "greetings"
+
+EVENT_TYPES = ((WELCOME, "Welcome"),
+               (GREETINGS, "Greetings"))
+
+
+class EventTriggeredSoundEffect(models.Model):
+    objects = models.Manager()
+
+    event = models.CharField(choices=EVENT_TYPES, max_length=255, null=False)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    sound_effect = models.ForeignKey(SoundEffect, on_delete=models.CASCADE, null=False)
+    discord_user = models.ForeignKey(DiscordUser, on_delete=models.CASCADE, null=True, blank=True)

@@ -6,7 +6,7 @@ services:
     command: daphne -u /tmp/daphne.sock dbot.asgi:application
     restart: unless-stopped
     env_file:
-      - .env
+      - dbot/.env
     ports:
     - "127.0.0.1:4322:4322"
     depends_on:
@@ -21,7 +21,7 @@ services:
     command: celery -A dbot worker -l INFO --concurrency=1
     restart: unless-stopped
     env_file:
-      - .env
+      - dbot/.env
     depends_on:
       - db
       - redis
@@ -32,7 +32,7 @@ services:
     image: postgres:12
     restart: unless-stopped
     env_file:
-      - .env
+      - dbot/.env
     volumes:
       - ~/dbot_data/db:/var/lib/postgresql/data
 
