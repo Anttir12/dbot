@@ -118,3 +118,7 @@ class EventTriggeredSoundEffect(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     sound_effect = models.ForeignKey(SoundEffect, on_delete=models.CASCADE, null=False)
     discord_user = models.ForeignKey(DiscordUser, on_delete=models.CASCADE, null=True, blank=True)
+
+    def __str__(self):
+        end = "for user {}".format(self.discord_user.display_name) if self.discord_user else ""
+        return "{} {}".format(self.event, end)

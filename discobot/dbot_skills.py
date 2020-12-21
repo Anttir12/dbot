@@ -1,9 +1,10 @@
+import asyncio
 import logging
 import random
 from typing import Optional, Union
 
 from asgiref.sync import sync_to_async
-from discord import FFmpegPCMAudio, Guild, PCMVolumeTransformer
+from discord import FFmpegPCMAudio, Guild, PCMVolumeTransformer, VoiceClient
 from discord.abc import GuildChannel
 from discord.ext.commands import Context
 from django.db.models import Q
@@ -109,4 +110,9 @@ class DBotSkills:
                                                  .select_related("sound_effect"))
         if event_sounds:
             event = random.choice(event_sounds)
+            for i in range(5):
+                voice_client: VoiceClient = self.guild.voice_client
+                if voice_client and voice_client.is_connected():
+                    break
+                await asyncio.sleep(0.5)
             await self.play_sound_effect(event.sound_effect)
