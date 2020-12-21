@@ -198,6 +198,8 @@ REST_FRAMEWORK = {
 
 CORS_ALLOWED_ORIGINS = [
     "https://localhost:3000",
+    "https://beta.dbot.devduck.fi",
+    "https://www.beta.dbot.devduck.fi",
 ]
 
 if DEBUG:
