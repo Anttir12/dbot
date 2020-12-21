@@ -155,7 +155,7 @@ class PlayBotSoundSerializer(serializers.Serializer):
     bot = serializers.CharField(read_only=True)
 
     def create(self, validated_data):
-        res = tasks.play_sound.delay(validated_data["sound_effect_id"], validated_data["override"])
+        tasks.play_sound.delay(validated_data["sound_effect_id"], validated_data["override"])
         return {"bot": "ok"}
 
     def validate_sound_effect_id(self, value):

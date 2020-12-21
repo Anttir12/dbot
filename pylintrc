@@ -4,4 +4,13 @@ max-line-length=120
 disable=missing-module-docstring,
         missing-class-docstring,
         missing-function-docstring,
-        logging-format-interpolation
+        logging-format-interpolation,
+        too-few-public-methods,
+        no-self-use,
+        invalid-name
+
+ignore=migrations,
+       venv,
+       uploads,
+       manage.py,
+       test_settings.py,

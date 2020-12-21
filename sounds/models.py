@@ -91,3 +91,30 @@ class Favourites(models.Model):
 
     def __str__(self):
         return f"{self.name}"
+
+
+class DiscordUser(models.Model):
+    objects = models.Manager()
+    display_name = models.CharField(max_length=255, null=False, blank=False)
+    mention = models.CharField(max_length=255, null=False, blank=False, unique=True)
+    added_by = models.ForeignKey(User, related_name="added_discord_users", on_delete=models.SET_NULL, null=True)
+    auto_join = models.BooleanField(default=False)
+
+    def __str__(self):
+        return "{} ({})".format(self.display_name, self.mention)
+
+
+WELCOME = "welcome"
+GREETINGS = "greetings"
+
+EVENT_TYPES = ((WELCOME, "Welcome"),
+               (GREETINGS, "Greetings"))
+
+
+class EventTriggeredSoundEffect(models.Model):
+    objects = models.Manager()
+
+    event = models.CharField(choices=EVENT_TYPES, max_length=255, null=False)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    sound_effect = models.ForeignKey(SoundEffect, on_delete=models.CASCADE, null=False)
+    discord_user = models.ForeignKey(DiscordUser, on_delete=models.CASCADE, null=True, blank=True)

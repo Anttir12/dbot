@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 from drf_spectacular.utils import extend_schema
 from rest_framework import permissions
 from rest_framework.exceptions import ValidationError
@@ -39,6 +39,7 @@ class SoundEffectFromYT(APIView):
             sound_effect = serializer.create_sound_effect(save=False)
             preview_file = sound_effect.sound_effect.file.file
             return HttpResponse(preview_file, content_type="audio/ogg")
+        return HttpResponseBadRequest()
 
 
 class CreateSoundEffectFromYt(CreateAPIView):
@@ -51,6 +52,7 @@ class CreateSoundEffectFromYt(CreateAPIView):
             sound_effect = serializer.create_sound_effect(save=False)
             preview_file = sound_effect.sound_effect.file.file
             return HttpResponse(preview_file, content_type="audio/ogg")
+        return HttpResponseBadRequest()
 
 
 class CategoryList(ListCreateAPIView):
@@ -71,9 +73,6 @@ class SoundEffectsByCategory(ListAPIView):
 class SoundEffectAudio(UpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = SoundEffectAudioSerializer
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
 
     @extend_schema(
         responses={(200, 'audio/ogg')}

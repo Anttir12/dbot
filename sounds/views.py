@@ -6,9 +6,9 @@ from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404
 from django.contrib.admin.views.decorators import staff_member_required
 
-from . import tasks, utils
-from .forms import SoundEffectUpload, SoundEffectFilter
-from .models import SoundEffect
+from sounds import tasks, utils
+from sounds.forms import SoundEffectUpload, SoundEffectFilter
+from sounds.models import SoundEffect
 
 
 logger = logging.getLogger(__name__)

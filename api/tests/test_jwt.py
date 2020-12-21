@@ -1,6 +1,5 @@
 from django.contrib.auth.models import User
 from django.urls import reverse
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.tests.test import DbotApiTest
 
@@ -20,4 +19,3 @@ class JwtTest(DbotApiTest):
         refresh_token = self._set_jwt_credentials(self.user1.username)[1]
         response = self.client.post(reverse("api:token_refresh"), data={"refresh": refresh_token})
         self.assertContains(response, "access")
-

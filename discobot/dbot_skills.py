@@ -1,20 +1,15 @@
-import os
 import logging
+import random
 from typing import Optional, Union
-from urllib.parse import urlparse, parse_qs
-
-import magic
-import pytube
 
 from asgiref.sync import sync_to_async
 from discord import FFmpegPCMAudio, Guild, PCMVolumeTransformer
 from discord.abc import GuildChannel
 from discord.ext.commands import Context
-from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db.models import Q
 
-from sounds import utils
-from sounds.models import SoundEffect, CachedStream
+from sounds import utils, models
+from sounds.models import SoundEffect, EventTriggeredSoundEffect
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +79,34 @@ class DBotSkills:
             if self.channel:
                 await self.channel.send("I was unable to find a proper stream. Sorry!")
 
+    async def play_sound_effect(self, sound_effect: SoundEffect, override=False):
+        voice_client = self.guild.voice_client
+        if voice_client and (not voice_client.is_playing() or override):
+            if override:
+                voice_client.stop()
+            audio = PCMVolumeTransformer(FFmpegPCMAudio(sound_effect.sound_effect.path), self.volume)
+            voice_client.play(audio)
+
     async def set_channel(self, ctx: Context):
         cid = ctx.message.channel.id
         self.channel = ctx.message.channel
         await ctx.message.channel.send(f"Channel ID: {cid}")
+
+    async def welcome_user_voice(self, member):
+        voice_client = self.guild.voice_client
+        if voice_client:
+            event_sounds = await sync_to_async(list)(EventTriggeredSoundEffect.objects.filter(
+                event=models.WELCOME, discord_user__mention=member.mention).select_related("sound_effect"))
+            if not event_sounds:
+                event_sounds = await sync_to_async(list)(EventTriggeredSoundEffect.objects.filter(
+                    event=models.WELCOME, discord_user__isnull=True).select_related("sound_effect"))
+            if event_sounds:
+                event = random.choice(event_sounds)
+                await self.play_sound_effect(event.sound_effect)
+
+    async def greetings_joining_voice(self):
+        event_sounds = await sync_to_async(list)(EventTriggeredSoundEffect.objects.filter(event=models.GREETINGS)
+                                                 .select_related("sound_effect"))
+        if event_sounds:
+            event = random.choice(event_sounds)
+            await self.play_sound_effect(event.sound_effect)

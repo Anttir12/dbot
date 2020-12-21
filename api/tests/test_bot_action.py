@@ -27,4 +27,3 @@ class BotActionTest(DbotApiTest):
                                                                          "override": False})
             self.assertEqual(response.json(), {"bot": "ok"})
             play_sound.assert_called_once()
-

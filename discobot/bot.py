@@ -5,6 +5,7 @@ import threading
 from time import sleep
 from typing import Optional
 
+import discord
 from django.conf import settings
 
 from discobot.dbot import DiscoBot
@@ -44,5 +45,8 @@ def init_bot():
 async def start_bot(bot_wrapper):
     pid = os.getpid()
     logger.info("Started bot! and test ok? PID:{}".format(pid))
-    bot_wrapper.bot = DiscoBot(settings.DISCORD_GUILD, command_prefix=settings.COMMAND_PREFIX)
+    intents = discord.Intents.default()
+    intents.members = True
+    bot_wrapper.bot = DiscoBot(settings.DISCORD_GUILD, command_prefix=settings.COMMAND_PREFIX,
+                               intents=intents)
     await bot_wrapper.bot.start(settings.DISCORD_TOKEN)
