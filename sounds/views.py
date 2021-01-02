@@ -67,7 +67,7 @@ def sound_audio(request, sound_id):
         except ValueError:
             return HttpResponse(status=400)
     else:
-        response = HttpResponse(sound.sound_effect.file)
+        response = HttpResponse(sound.sound_effect.file, content_type="audio/ogg")
     return response
 
 
