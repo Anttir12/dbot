@@ -6,7 +6,7 @@ from django.forms import widgets
 
 from . import utils
 from .models import SoundEffect, SoundEffectGif, AlternativeName, CachedStream, Category, Favourites, DiscordUser, \
-    EventTriggeredSoundEffect
+    EventTriggeredSoundEffect, OwEventSoundEffect
 
 
 class RangeInput(widgets.NumberInput):
@@ -48,3 +48,4 @@ admin.site.register(CachedStream)
 admin.site.register(Favourites)
 admin.site.register(DiscordUser)
 admin.site.register(EventTriggeredSoundEffect)
+admin.site.register(OwEventSoundEffect)

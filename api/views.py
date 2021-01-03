@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 
 from api import custom_permissions, custom_renderers
 from api.serializers import SoundEffectSerializer, FavouritesSerializer, SoundEffectFromYTSerializer, \
-    PlayBotSoundSerializer, SoundEffectAudioSerializer, SoundEffectAudioPreviewSerializer, FavouritesMinimalSerializer
+    PlayBotSoundSerializer, SoundEffectAudioSerializer, SoundEffectAudioPreviewSerializer, FavouritesMinimalSerializer, OwEventSerializer
 
 from sounds import models, utils
 
@@ -174,3 +174,8 @@ class FavouritesSoundEffects(APIView):
 class BotPlaySound(CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PlayBotSoundSerializer
+
+
+class OwEvent(CreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = OwEventSerializer

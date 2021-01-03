@@ -162,3 +162,38 @@ class PlayBotSoundSerializer(serializers.Serializer):
         if not models.SoundEffect.objects.filter(id=value).exists():
             raise serializers.ValidationError(f"SoundEffect with id {value} does not exist")
         return value
+
+
+class OwEventSerializer(serializers.ModelSerializer):
+    override = serializers.BooleanField(write_only=True, required=False, default=True)
+    hero = serializers.ChoiceField(write_only=True, choices=models.OwEventSoundEffect.Hero.choices)
+    event = serializers.ChoiceField(write_only=True, choices=models.OwEventSoundEffect.Event.choices)
+    team = serializers.ChoiceField(write_only=True, choices=models.OwEventSoundEffect.Team.choices)
+    bot = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = models.OwEventSoundEffect
+        fields = ("hero", "event", "team", "override", "bot")
+
+    def create(self, validated_data):
+        tasks.trigger_ow_event.delay(validated_data["hero"], validated_data["event"], validated_data["team"],
+                                     validated_data["override"])
+        return {"bot": "ok"}
+
+    def validate_team(self, value):
+        try:
+            return models.OwEventSoundEffect.Team(value)
+        except ValueError as e:
+            raise ValidationError(f"{value} not a valid team") from e
+
+    def validate_event(self, value):
+        try:
+            return models.OwEventSoundEffect.Event(value)
+        except ValueError as e:
+            raise ValidationError(f"{value} not a valid event") from e
+
+    def validate_hero(self, value):
+        try:
+            return models.OwEventSoundEffect.Hero(value)
+        except ValueError as e:
+            raise ValidationError(f"{value} not a valid hero") from e

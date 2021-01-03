@@ -10,7 +10,7 @@ from discord.ext.commands import Context
 from django.db.models import Q
 
 from sounds import utils, models
-from sounds.models import SoundEffect, EventTriggeredSoundEffect
+from sounds.models import SoundEffect, EventTriggeredSoundEffect, OwEventSoundEffect
 
 logger = logging.getLogger(__name__)
 
@@ -116,3 +116,21 @@ class DBotSkills:
                     break
                 await asyncio.sleep(0.5)
             await self.play_sound_effect(event.sound_effect)
+
+    async def ow_event(self, hero: OwEventSoundEffect.Hero, event: OwEventSoundEffect.Event,
+                       team: OwEventSoundEffect.Team, override: bool = True):
+        voice_client = self.guild.voice_client
+        if voice_client:
+            ow_events = await sync_to_async(list)(OwEventSoundEffect.objects.filter(
+                hero=hero, event=event, team=team).select_related("sound_effect"))
+            if not ow_events:
+                ow_events = await sync_to_async(list)(OwEventSoundEffect.objects.filter(
+                    event=event, team=team).select_related("sound_effect"))
+            if ow_events:
+                event = random.choice(ow_events)
+                logger.info(f"Playing {event.sound_effect} which was triggered by ow_event {event} {team} {hero}")
+                await self.play_sound_effect(event.sound_effect, override=override)
+            else:
+                logger.info(f"No action set for event {event} {team}")
+        else:
+            logger.info("Triggered event when no voice available")

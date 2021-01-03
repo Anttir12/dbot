@@ -28,4 +28,5 @@ urlpatterns = [
     path('favourites/<int:pk>/sound_effects', views.FavouritesSoundEffects.as_view(), name="favourites_sound_effects"),
 
     path('bot/play_sound', views.BotPlaySound.as_view(), name="play_sound"),
+    path('bot/ow_event', views.OwEvent.as_view(), name="ow_event"),
 ]
