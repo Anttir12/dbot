@@ -149,6 +149,13 @@ class SoundEffectAudioPreviewSerializer(serializers.ModelSerializer):
         fields = ("sound_effect", "volume")
 
 
+class CategorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.Category
+        fields = ("name", "color_code", "text_color_code")
+
+
 class PlayBotSoundSerializer(serializers.Serializer):
     sound_effect_id = serializers.IntegerField(write_only=True, required=True)
     override = serializers.BooleanField(write_only=True, required=True)

@@ -20,7 +20,8 @@ urlpatterns = [
 
     path('sound_effects/from_yt', views.CreateSoundEffectFromYt.as_view(), name="sound_effect_from_yt"),
 
-    path('category/<str:category_name>/sound_effects', views.SoundEffectsByCategory.as_view(),
+    path('categories', views.CategoryList.as_view(), name="categories"),
+    path('categories/<str:category_name>/sound_effects', views.SoundEffectsByCategory.as_view(),
          name="sound_effects_by_category"),
 
     path('favourites', views.FavouritesList.as_view(), name="favourites"),
