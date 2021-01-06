@@ -6,7 +6,11 @@ djangorestframework-simplejwt==4.6.0
 drf-spectacular==0.12.0
 pyyaml==5.3.1
 uritemplate==3.0.1
+
 python-magic==0.4.18
+# Uncomment below for windows
+python-magic-bin==0.4.14
+
 psycopg2-binary==2.8.6
 django-crispy-forms==1.10.0
 django-extensions==3.1.0
@@ -20,6 +24,7 @@ pytube==10.4.1
 django-cors-headers==3.6.0
 
 pytest-django==4.1.0
+# libfaketime can be ignored in windows. But tests cannot be run without it!
 libfaketime==2.0.0
 # pytest-libfaketime==0.1.2
 # of if using pycharm set this environmental variable after installing libfaketime:

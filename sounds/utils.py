@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import logging
 import sys
+import tempfile
 from io import BytesIO
 from os.path import basename
 from typing import Optional
@@ -86,9 +87,9 @@ def download_stream_and_cache_it(yt_url, yt_id) -> CachedStream:
         raise YtException("Unable to load streams from {}".format(yt_url)) from broad_except
 
     filtered = y_t.streams.filter(audio_codec="opus").order_by('bitrate').desc().first()
-    if not enough_disk_space_for_yt_stream(filtered, "/tmp"):
+    if not enough_disk_space_for_yt_stream(filtered, tempfile.gettempdir()):
         raise YtException("Not enough disk space to download yt stream")
-    source = filtered.download("/tmp/streams")
+    source = filtered.download(os.path.join(tempfile.gettempdir(), "streams"))
     title = filtered.title
     size = os.path.getsize(source)
     with open(source, 'rb') as ytaudio:
@@ -98,7 +99,7 @@ def download_stream_and_cache_it(yt_url, yt_id) -> CachedStream:
         file = InMemoryUploadedFile(ytaudio, "sound_effect", os.path.basename(source), mime_type, size, None)
         cached_stream = CachedStream(title=title, yt_id=yt_id, file=file, size=filtered.filesize_approx)
         cached_stream.save(remove_oldest_if_full=True)
-        os.remove(source)
+    os.remove(source)
     return cached_stream
 
 
