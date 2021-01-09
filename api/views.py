@@ -59,6 +59,7 @@ class CreateSoundEffectFromYt(CreateAPIView):
 class CategoryList(ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = CategorySerializer
+    queryset = models.Category.objects.all()
 
 
 class SoundEffectsByCategory(ListAPIView):
