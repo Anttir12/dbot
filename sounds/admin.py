@@ -31,8 +31,9 @@ class SoundEffectForm(forms.ModelForm):
 
 class SoundEffectAdmin(admin.ModelAdmin):
     form = SoundEffectForm
-    search_fields = ("name", "categories__name")
+    search_fields = ("name",)
     autocomplete_fields = ("categories",)
+    list_filter = ("categories",)
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
