@@ -31,6 +31,7 @@ class SoundEffectForm(forms.ModelForm):
 
 class SoundEffectAdmin(admin.ModelAdmin):
     form = SoundEffectForm
+    list_display = ("name", "created_by", "created_at")
     search_fields = ("name",)
     autocomplete_fields = ("categories",)
     list_filter = ("categories",)
