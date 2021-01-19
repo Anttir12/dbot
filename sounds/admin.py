@@ -27,11 +27,12 @@ class SoundEffectForm(forms.ModelForm):
     class Meta:
         model = SoundEffect
         fields = ("name", "sound_effect", "categories")
-        widgets = {"categories": widgets.CheckboxSelectMultiple}
 
 
 class SoundEffectAdmin(admin.ModelAdmin):
     form = SoundEffectForm
+    search_fields = ("name", "categories__name")
+    autocomplete_fields = ("categories",)
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
@@ -40,7 +41,11 @@ class SoundEffectAdmin(admin.ModelAdmin):
             utils.modify_sound_effect_volume(obj, form.cleaned_data["volume"])
 
 
-admin.site.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    search_fields = ("name",)
+
+
+admin.site.register(Category, CategoryAdmin)
 admin.site.register(SoundEffect, SoundEffectAdmin)
 admin.site.register(SoundEffectGif)
 admin.site.register(AlternativeName)

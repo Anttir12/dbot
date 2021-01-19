@@ -24,7 +24,7 @@ class DBotSkills:
     def __init__(self):
         self.guild: Optional[Guild] = None
         self.channel = None
-        self.volume = 0.5
+        self.volume = 0.8
 
     async def play_sound(self, sound: Union[str, SoundEffect], channel: Optional[GuildChannel],
                          override=False, gif=True):
