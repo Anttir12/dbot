@@ -11,22 +11,9 @@ services:
     - "127.0.0.1:4322:4322"
     depends_on:
       - db
-      - redis
     volumes:
       - ~/dbot_data/uploads:/app/uploads
       - /tmp:/tmp
-
-  dbot-bot:
-    image: dbot:latest
-    command: celery -A dbot worker -l INFO --concurrency=1
-    restart: unless-stopped
-    env_file:
-      - dbot/.env
-    depends_on:
-      - db
-      - redis
-    volumes:
-      - ~/dbot_data/uploads:/app/uploads
 
   db:
     image: postgres:12
@@ -35,6 +22,3 @@ services:
       - dbot/.env
     volumes:
       - ~/dbot_data/db:/var/lib/postgresql/data
-
-  redis:
-    image: redis

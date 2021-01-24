@@ -8,9 +8,9 @@ from discord import Member, VoiceState, Guild, VoiceChannel
 from discord.ext import commands
 from django.contrib.auth.models import User
 
-from discobot import utils
-from discobot.commands import DiscoBotCommands
-from discobot.dbot_skills import DBotSkills
+from bot import utils
+from bot.commands import DiscoBotCommands
+from bot.dbot_skills import DBotSkills
 from sounds.models import DiscordUser
 
 logger = logging.getLogger(__name__)

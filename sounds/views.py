@@ -1,12 +1,14 @@
 import logging
 
+from asgiref.sync import async_to_sync
 from django.db.models import Q
 from django.views import View
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404
 from django.contrib.admin.views.decorators import staff_member_required
 
-from sounds import tasks, utils
+from bot.bot import bot
+from sounds import utils
 from sounds.forms import SoundEffectUpload, SoundEffectFilter
 from sounds.models import SoundEffect
 
@@ -75,7 +77,6 @@ def sound_audio(request, sound_id):
 def play_sound(request):
     override = request.POST.get("override_sound", False)
     sound_id = request.POST.get("sound_id")
-    if not SoundEffect.objects.filter(id=sound_id).exists():
-        return HttpResponse(request, status=404)
-    tasks.play_sound.delay(sound_id, override)
+    sound_effect = get_object_or_404(SoundEffect, id=sound_id)
+    async_to_sync(bot.skills.play_sound)(sound_effect, override=override)
     return HttpResponse(request, status=200)

@@ -29,7 +29,6 @@ env = environ.Env(
     DATABASE_PASSWORD=(str, 'OMWDESYBPASSWORD'),
     DATABASE_HOST=(str, '127.0.0.1'),
     DATABASE_PORT=(int, 5432),
-    CELERY_BROKER_URL=(str, 'redis://localhost:6379'),
     STATIC_ROOT=(str, os.path.join(BASE_DIR, 'static/')),
     COMMAND_PREFIX=(str, "!"),
     DISCORD_TOKEN=(str, ""),
@@ -60,6 +59,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'sounds.apps.SoundsConfig',
+    'bot.apps.BotConfig',
     'crispy_forms',
     'django_extensions',
     'django_cleanup.apps.CleanupConfig',
@@ -173,13 +173,9 @@ LOGGING = {
     },
 }
 
-CELERY_BROKER_URL = env("CELERY_BROKER_URL")
-CELERY_ACCEPT_CONTENT = ['application/json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'UTC'
-
 COMMAND_PREFIX = env("COMMAND_PREFIX")
+
+RUN_BOT = True
 
 DISCORD_TOKEN = env("DISCORD_TOKEN")
 DISCORD_GUILD = env("DISCORD_GUILD")
@@ -205,7 +201,6 @@ CORS_ALLOWED_ORIGINS = [
 if DEBUG:
     # In debug mode keep the access token alive for a long time
     SIMPLE_JWT = {'ACCESS_TOKEN_LIFETIME': datetime.timedelta(minutes=60)}
-    print(SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'])
 
 # SSL/HTTPS
 if not DEBUG:
