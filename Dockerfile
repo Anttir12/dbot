@@ -11,5 +11,5 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 ADD . /app/
-RUN python manage.py collectstatic --noinput
+RUN python manage.py collectstatic --noinput --settings=dbot.no_bot_settings
 EXPOSE 4322

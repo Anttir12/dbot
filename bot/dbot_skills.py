@@ -26,7 +26,7 @@ class DBotSkills:
         self.channel = None
         self.volume = 0.8
 
-    async def play_sound(self, sound: Union[str, SoundEffect], channel: Optional[GuildChannel],
+    async def play_sound(self, sound: Union[str, SoundEffect], channel: Optional[GuildChannel] = None,
                          override=False, gif=True):
         logger.info("Playing sound")
         voice_client = self.guild.voice_client
@@ -110,7 +110,7 @@ class DBotSkills:
                                                  .select_related("sound_effect"))
         if event_sounds:
             event = random.choice(event_sounds)
-            for i in range(5):
+            for _ in range(5):
                 voice_client: VoiceClient = self.guild.voice_client
                 if voice_client and voice_client.is_connected():
                     break

@@ -5,7 +5,7 @@ from asgiref.sync import sync_to_async
 from discord.ext import commands
 from discord.ext.commands import Context
 
-from discobot.dbot_skills import DBotSkills, SkillException
+from bot.dbot_skills import DBotSkills, SkillException
 from sounds.models import SoundEffect
 
 logger = logging.getLogger(__name__)

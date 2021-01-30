@@ -10,8 +10,8 @@ from rest_framework.views import APIView
 
 from api import custom_permissions, custom_renderers
 from api.serializers import SoundEffectSerializer, FavouritesSerializer, SoundEffectFromYTSerializer, \
-    PlayBotSoundSerializer, SoundEffectAudioSerializer, SoundEffectAudioPreviewSerializer, FavouritesMinimalSerializer, OwEventSerializer, \
-    CategorySerializer
+    PlayBotSoundSerializer, SoundEffectAudioSerializer, SoundEffectAudioPreviewSerializer, \
+    FavouritesMinimalSerializer, OwEventSerializer, CategorySerializer
 
 from sounds import models, utils
 

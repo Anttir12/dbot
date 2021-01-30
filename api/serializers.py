@@ -1,12 +1,14 @@
 import os
 import sys
 
+from asgiref.sync import async_to_sync
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError, APIException
 
-from sounds import models, utils, tasks
+from bot.bot import bot
+from sounds import models, utils
 from sounds.utils import YtException
 
 
@@ -162,7 +164,8 @@ class PlayBotSoundSerializer(serializers.Serializer):
     bot = serializers.CharField(read_only=True)
 
     def create(self, validated_data):
-        tasks.play_sound.delay(validated_data["sound_effect_id"], validated_data["override"])
+        sound_effect = models.SoundEffect.objects.get(id=validated_data["sound_effect_id"])
+        async_to_sync(bot.skills.play_sound)(sound_effect, override=validated_data["override"])
         return {"bot": "ok"}
 
     def validate_sound_effect_id(self, value):
@@ -183,8 +186,8 @@ class OwEventSerializer(serializers.ModelSerializer):
         fields = ("hero", "event", "team", "override", "bot")
 
     def create(self, validated_data):
-        tasks.trigger_ow_event.delay(validated_data["hero"], validated_data["event"], validated_data["team"],
-                                     validated_data["override"])
+        async_to_sync(bot.skills.ow_event)(validated_data["hero"], validated_data["event"], validated_data["team"],
+                                           validated_data["override"])
         return {"bot": "ok"}
 
     def validate_team(self, value):
