@@ -10,7 +10,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from bot.bot import bot
 from sounds import utils
 from sounds.forms import SoundEffectUpload, SoundEffectFilter
-from sounds.models import SoundEffect
+from sounds import models
 
 
 logger = logging.getLogger(__name__)
@@ -27,11 +27,11 @@ class Sounds(View):
                 query = Q(categories__in=filter_form.cleaned_data["categories"])
             if filter_form.cleaned_data["categoryless"]:
                 query = Q(query | Q(categories__isnull=True))
-            sounds = SoundEffect.objects.filter(query)
+            sounds = models.SoundEffect.objects.filter(query)
             if filter_form.cleaned_data["favourite_list"]:
                 sounds = sounds.filter(favourite_lists__in=filter_form.cleaned_data["favourite_list"])
         else:
-            sounds = SoundEffect.objects.all()
+            sounds = models.SoundEffect.objects.all()
         sounds = sounds.order_by("categories__name")
         return render(request, "sounds.html", {"form": form,
                                                "filter_form": filter_form,
@@ -45,7 +45,7 @@ class Sounds(View):
                 return HttpResponse(preview_file, content_type="audio/ogg")
             form.save()
             form = SoundEffectUpload()
-        sounds = SoundEffect.objects.all()
+        sounds = models.SoundEffect.objects.all()
         filter_form = SoundEffectFilter(request.user)
         return render(request, "sounds.html", {"form": form,
                                                "filter_form": filter_form,
@@ -56,7 +56,7 @@ class Sounds(View):
 @staff_member_required
 def sound_audio(request, sound_id):
     vol = request.GET.get("volume")
-    sound: SoundEffect = get_object_or_404(SoundEffect, id=sound_id)
+    sound: models.SoundEffect = get_object_or_404(models.SoundEffect, id=sound_id)
 
     if vol:
         try:
@@ -75,8 +75,11 @@ def sound_audio(request, sound_id):
 
 @staff_member_required
 def play_sound(request):
+    user = request.user
     override = request.POST.get("override_sound", False)
     sound_id = request.POST.get("sound_id")
-    sound_effect = get_object_or_404(SoundEffect, id=sound_id)
-    async_to_sync(bot.skills.play_sound)(sound_effect, override=override)
+    sound_effect = get_object_or_404(models.SoundEffect, id=sound_id)
+    played = async_to_sync(bot.skills.play_sound)(sound_effect, override=override)
+    if played:
+        models.SoundEffectPlayHistory.create_record(sound_effect=sound_effect, played_by=user)
     return HttpResponse(request, status=200)

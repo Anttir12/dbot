@@ -4,6 +4,7 @@ from typing import Optional
 from asgiref.sync import sync_to_async
 from discord.ext import commands
 from discord.ext.commands import Context
+from django.db.models import Q
 
 from bot.dbot_skills import DBotSkills, SkillException
 from sounds.models import SoundEffect
@@ -36,7 +37,7 @@ class DiscoBotCommands(commands.Cog):
     async def play(self, ctx: Context, yt_url: str):
         yt_url = clean_url(yt_url)
         try:
-            await self.skills.play(yt_url)
+            await self.skills.play_from_yt_url(yt_url)
         except SkillException as skill_exception:
             await ctx.message.channel.send(f"Error while trying to play from url: {yt_url}: {skill_exception}")
 
@@ -49,7 +50,10 @@ class DiscoBotCommands(commands.Cog):
 
     @commands.command(name="!")
     async def sound(self, ctx: Context, name):
-        await self.skills.play_sound(name, ctx.message.channel)
+        sound_effects = await sync_to_async(SoundEffect.objects.filter)(Q(name=name) |
+                                                                        Q(alternativename__name=name))
+        sound_effect = await sync_to_async(sound_effects.first)()
+        await self.skills.play_sound(sound_effect, ctx.message.channel)
 
     @commands.command()
     async def stop(self, ctx: Context):

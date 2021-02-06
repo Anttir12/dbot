@@ -8,6 +8,7 @@ from typing import Optional
 import discord
 from django.conf import settings
 
+from bot import mocks
 from bot.dbot import DiscoBot
 
 
@@ -37,6 +38,11 @@ async def start_bot():
     logger.info("Started bot! and test ok? PID:{}".format(pid))
     intents = discord.Intents.default()
     intents.members = True
-    global bot
+    global bot  # Better solution needed. This works for now   pylint: disable=global-statement
     bot = DiscoBot(settings.DISCORD_GUILD, command_prefix=settings.COMMAND_PREFIX, intents=intents)
     await bot.start(settings.DISCORD_TOKEN)
+
+
+def init_mock_bot():
+    global bot  # Better solution needed. This works for now   pylint: disable=global-statement
+    bot = mocks.DiscoMockBot()

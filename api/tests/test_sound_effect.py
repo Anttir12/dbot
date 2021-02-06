@@ -36,49 +36,55 @@ class SoundEffectTest(DbotApiTest):
 
     def test_sound_effects(self):
         response = self.client.get(reverse("api:sound_effects"))
+        self.assertEqual(200, response.status_code)
         self.assertEqual(response.json(), [
             {'id': 1,
              'created_at': self.created_at_drf,
              'created_by': "User1",
              'name': 'sound_effect_1',
+             'play_count': 0,
              'categories': ["category1"]},
             {'id': 2,
              'created_at': self.created_at_drf,
              'created_by': "User1",
              'name': 'sound_effect_2',
+             'play_count': 0,
              'categories': []
              },
             {'id': 3,
              'created_at': self.created_at_drf,
              'created_by': "User2",
              'name': 'sound_effect_3',
+             'play_count': 0,
              'categories': ["category1", "category2"]
              }])
         self.assertEqual(3, len(response.json()))
 
     def test_get_sound_effect(self):
-        response = self.client.get(reverse("api:sound_effect", args=(1,)))
-        self.assertEqual(response.json(), {'id': 1,
+        response = self.client.get(reverse("api:sound_effect", args=(self.se1.id,)))
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(response.json(), {'id': self.se1.id,
                                            'created_at': self.created_at_drf,
                                            'created_by': "User1",
                                            'name': 'sound_effect_1',
+                                           'play_count': 0,
                                            'categories': ["category1"]})
 
     def test_get_sound_effect_audio(self):
-        response = self.client.get(reverse("api:sound_effect_audio", args=(1,)))
-        self.assertEqual(response._headers["content-type"][1], "audio/ogg")
+        response = self.client.get(reverse("api:sound_effect_audio", args=(self.se1.id,)))
+        self.assertEqual(response["content-type"], "audio/ogg")
         self.assertEqual(response.content, self.se1.sound_effect.file.read(), "Returned wrong file?")
 
     def test_get_sound_effect_audio_higher_volume(self):
-        response = self.client.get(reverse("api:sound_effect_audio", args=(1,)), {"volume": 1.5})
-        self.assertEqual(response._headers["content-type"][1], "audio/ogg")
+        response = self.client.get(reverse("api:sound_effect_audio", args=(self.se1.id,)), {"volume": 1.5})
+        self.assertEqual(response["content-type"], "audio/ogg")
         self.assertNotEqual(response.content, self.se1.sound_effect.file.read(), "Returned wrong file?")
         # No idea how to test volume. Make sure the size is close to original
         self.assertTrue(self.se1.sound_effect.size * 0.9 < len(response.content) < self.se1.sound_effect.size * 1.1)
 
     def test_get_sound_effect_audio_lower_volume(self):
         response = self.client.get(reverse("api:sound_effect_audio", args=(1,)), {"volume": 0.5})
-        self.assertEqual(response._headers["content-type"][1], "audio/ogg")
+        self.assertEqual(response["content-type"], "audio/ogg")
         self.assertNotEqual(response.content, self.se1.sound_effect.file.read(), "Returned wrong file?")
         # No idea how to test volume. Make sure the size is close to original
         self.assertTrue(self.se1.sound_effect.size * 0.9 < len(response.content) < self.se1.sound_effect.size * 1.1)

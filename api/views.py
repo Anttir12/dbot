@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.db.models import Count, Q
 from django.http import HttpResponse, HttpResponseBadRequest
 from drf_spectacular.utils import extend_schema
 from rest_framework import permissions
@@ -22,13 +23,21 @@ class SoundEffectList(ListAPIView):
     """
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = SoundEffectSerializer
-    queryset = models.SoundEffect.objects.all()
+
+    def get_queryset(self):
+        user = self.request.user
+        count_annotation = Count("play_history__played_by", filter=Q(play_history__played_by=user), distinct=False)
+        return models.SoundEffect.objects.annotate(play_count=count_annotation).distinct()
 
 
 class SoundEffectDetail(RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = SoundEffectSerializer
-    queryset = models.SoundEffect.objects.all()
+
+    def get_queryset(self):
+        user = self.request.user
+        count_annotation = Count("play_history__played_by", filter=Q(play_history__played_by=user), distinct=False)
+        return models.SoundEffect.objects.annotate(play_count=count_annotation).distinct()
 
 
 class SoundEffectFromYT(APIView):
@@ -68,8 +77,10 @@ class SoundEffectsByCategory(ListAPIView):
     lookup_url_kwarg = "category_name"
 
     def get_queryset(self):
+        user = self.request.user
         category_name = self.kwargs.get(self.lookup_url_kwarg)
-        sound_effects = models.SoundEffect.objects.filter(categories__name=category_name)
+        count_annotation = Count("play_history__played_by", filter=Q(play_history__played_by=user), distinct=False)
+        sound_effects = models.SoundEffect.objects.annotate(count_annotation).filter(categories__name=category_name)
         return sound_effects
 
 
@@ -133,8 +144,11 @@ class FavouritesSoundEffects(APIView):
         """
         Returns list of sound_effect in the favourites
         """
-        favourites = get_object_or_404(models.Favourites, id=pk, owner=request.user)
-        serializer = SoundEffectSerializer(favourites.sound_effects.all(), many=True)
+        user = request.user
+        favourites = get_object_or_404(models.Favourites, id=pk, owner=user)
+        count_annotation = Count("play_history__played_by", filter=Q(play_history__played_by=user), distinct=False)
+        serializer = SoundEffectSerializer(favourites.sound_effects.annotate(play_count=count_annotation).all(),
+                                           many=True)
         return Response(serializer.data)
 
     def post(self, request, pk):

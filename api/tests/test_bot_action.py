@@ -7,6 +7,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.urls import reverse
 
 from api.tests.test import DbotApiTest
+from bot.dbot_skills import DBotSkills
 from sounds.models import SoundEffect
 
 
@@ -22,7 +23,7 @@ class BotActionTest(DbotApiTest):
 
     def test_play_sound(self):
         self._set_jwt_credentials(self.user1.username)
-        with patch("sounds.tasks.play_sound.delay") as play_sound:
+        with patch.object(DBotSkills, "play_sound") as play_sound:
             response = self.client.post(reverse("api:play_sound"), data={"sound_effect_id": self.se1.id,
                                                                          "override": False})
             self.assertEqual(response.json(), {"bot": "ok"})

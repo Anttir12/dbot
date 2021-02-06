@@ -5,6 +5,8 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.db.models import Q
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +22,6 @@ def validate_sound_effect_name(name):
 
 
 class Category(models.Model):
-    objects = models.Manager()
     name = models.CharField(max_length=128, unique=True, null=False)
     color_code = ColorField(null=False)
     text_color_code = ColorField(null=False, default="#000000")
@@ -30,7 +31,6 @@ class Category(models.Model):
 
 
 class SoundEffect(models.Model):
-    objects = models.Manager()  # Not needed but only paid pycharm detects this without this :D
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     last_edited = models.DateTimeField(auto_now=True)
@@ -47,19 +47,16 @@ class SoundEffect(models.Model):
 
 
 class SoundEffectGif(models.Model):
-    objects = models.Manager()  # Not needed but only paid pycharm detects this without this :D
     sound_effect = models.ForeignKey(SoundEffect, on_delete=models.CASCADE, related_name="gifs")
     url = models.CharField(max_length=300)
 
 
 class AlternativeName(models.Model):
-    objects = models.Manager()  # Not needed but only paid pycharm detects this without this :D
     sound_effect = models.ForeignKey(SoundEffect, on_delete=models.CASCADE)
     name = models.CharField(max_length=200, unique=True, validators=[validate_alternative_name])
 
 
 class CachedStream(models.Model):
-    objects = models.Manager()
     yt_id = models.CharField(max_length=30, unique=True)
     title = models.CharField(max_length=200, null=True)
     file = models.FileField(null=False, upload_to="uploads/cache/")
@@ -84,7 +81,6 @@ class Favourites(models.Model):
     class Meta:
         unique_together = [['owner', 'name']]
 
-    objects = models.Manager()
     owner = models.ForeignKey(User, related_name="favourite_lists", on_delete=models.CASCADE)
     name = models.CharField(max_length=50, null=False)
     sound_effects = models.ManyToManyField(to=SoundEffect, related_name="favourite_lists")
@@ -94,7 +90,6 @@ class Favourites(models.Model):
 
 
 class DiscordUser(models.Model):
-    objects = models.Manager()
     display_name = models.CharField(max_length=255, null=False, blank=False)
     mention = models.CharField(max_length=255, null=False, blank=False, unique=True)
     added_by = models.ForeignKey(User, related_name="added_discord_users", on_delete=models.SET_NULL, null=True)
@@ -112,7 +107,6 @@ EVENT_TYPES = ((WELCOME, "Welcome"),
 
 
 class EventTriggeredSoundEffect(models.Model):
-    objects = models.Manager()
 
     event = models.CharField(choices=EVENT_TYPES, max_length=255, null=False)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
@@ -172,8 +166,6 @@ class OwEventSoundEffect(models.Model):
         ZARYA = "Zarya"
         ZENYATTA = "Zenyatta"
 
-    objects = models.Manager()
-
     event = models.CharField(choices=Event.choices, max_length=64, null=False)
     hero = models.CharField(choices=Hero.choices, max_length=64, null=True, blank=True)
     team = models.CharField(choices=Team.choices, max_length=64, null=False)
@@ -182,3 +174,25 @@ class OwEventSoundEffect(models.Model):
 
     def __str__(self):
         return f'{self.event.replace("_", " ")} by team {self.team}'
+
+
+class SoundEffectPlayHistory(models.Model):
+
+    class Meta:
+        # Not sure about this (First join by sound_effect -> filter by played_by -> optionally filter by date)
+        index_together = ["sound_effect", "played_by", "played_at"]
+
+    sound_effect = models.ForeignKey(SoundEffect, on_delete=models.CASCADE, null=False, related_name="play_history")
+    played_by = models.ForeignKey(User, on_delete=models.CASCADE, null=False)
+    played_at = models.DateTimeField(auto_now_add=True)
+
+    @classmethod
+    def create_record(cls, sound_effect, played_by):
+        record_limit_per_user = timezone.now() - timezone.timedelta(seconds=1)
+        record_limit_per_user_per_sound = timezone.now() - timezone.timedelta(seconds=5)
+        # plays from same user within one second or same user and same sound within 5 seconds are not counted
+        if not SoundEffectPlayHistory.objects.filter(
+                Q(played_by=played_by, played_at__gte=record_limit_per_user) |
+                Q(played_by=played_by, sound_effect=sound_effect, played_at__gte=record_limit_per_user_per_sound)
+        ).exists():
+            SoundEffectPlayHistory.objects.create(sound_effect=sound_effect, played_by=played_by)
