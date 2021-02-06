@@ -9,7 +9,7 @@ from django.utils import timezone
 from rest_framework import serializers, status
 
 from api.tests.test import DbotApiTest
-from sounds.models import SoundEffect, Favourites
+from sounds.models import SoundEffect, Favourites, SoundEffectPlayHistory
 
 
 class FavouritesTest(DbotApiTest):
@@ -128,6 +128,7 @@ class FavouritesTest(DbotApiTest):
     def test_get_favourite_sound_effects(self):
         self._set_jwt_credentials(self.user1.username)
         favs = Favourites.objects.create(name="myfavourites", owner=self.user1)
+        SoundEffectPlayHistory.create_record(self.se1, self.user1)
         favs.sound_effects.add(self.se1)
         favs.sound_effects.add(self.se2)
         favs.sound_effects.add(self.se3)
@@ -138,14 +139,17 @@ class FavouritesTest(DbotApiTest):
                                             'created_at': self.created_at_drf,
                                             'created_by': 'User1',
                                             'name': 'sound_effect_1',
+                                            'play_count': 1,
                                             'categories': []},
                                            {'id': 2,
                                             'created_at': self.created_at_drf,
                                             'created_by': 'User1',
                                             'name': 'sound_effect_2',
+                                            'play_count': 0,
                                             'categories': []},
                                            {'id': 3,
                                             'created_at': self.created_at_drf,
                                             'created_by': 'User1',
                                             'name': 'sound_effect_3',
+                                            'play_count': 0,
                                             'categories': []}])

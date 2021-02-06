@@ -12,3 +12,7 @@ DATABASES = {
 MEDIA_ROOT = "/tmp"
 
 CELERY_TASK_ALWAYS_EAGER = True
+
+RUN_BOT = False
+
+USE_MOCK_BOT = True

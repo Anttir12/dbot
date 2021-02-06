@@ -1,0 +1,1 @@
+DJANGO_SETTINGS_MODULE=dbot.no_bot_settings pylint --load-plugins pylint_django */.

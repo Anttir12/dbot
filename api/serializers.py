@@ -16,10 +16,11 @@ class SoundEffectSerializer(serializers.ModelSerializer):
 
     categories = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
     created_by = serializers.SlugRelatedField(read_only=True, slug_field="username")
+    play_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = models.SoundEffect
-        fields = ["id", "created_at", "created_by", "name", "categories"]
+        fields = ["id", "created_at", "created_by", "name", "play_count", "categories"]
 
 
 class SoundEffectFromYTSerializer(serializers.ModelSerializer):
@@ -164,9 +165,15 @@ class PlayBotSoundSerializer(serializers.Serializer):
     bot = serializers.CharField(read_only=True)
 
     def create(self, validated_data):
+        user = self.context["request"].user
         sound_effect = models.SoundEffect.objects.get(id=validated_data["sound_effect_id"])
-        async_to_sync(bot.skills.play_sound)(sound_effect, override=validated_data["override"])
+        played = async_to_sync(bot.skills.play_sound)(sound_effect, override=validated_data["override"])
+        if played:
+            models.SoundEffectPlayHistory.create_record(sound_effect=sound_effect, played_by=user)
         return {"bot": "ok"}
+
+    def update(self, instance, validated_data):
+        raise NotImplementedError()
 
     def validate_sound_effect_id(self, value):
         if not models.SoundEffect.objects.filter(id=value).exists():
