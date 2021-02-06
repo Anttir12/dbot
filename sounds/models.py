@@ -196,3 +196,6 @@ class SoundEffectPlayHistory(models.Model):
                 Q(played_by=played_by, sound_effect=sound_effect, played_at__gte=record_limit_per_user_per_sound)
         ).exists():
             SoundEffectPlayHistory.objects.create(sound_effect=sound_effect, played_by=played_by)
+
+    def __str__(self):
+        return "{} - {}".format(self.played_by.username, self.sound_effect)

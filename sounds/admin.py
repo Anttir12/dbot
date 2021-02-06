@@ -47,6 +47,11 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ("name",)
 
 
+class SoundEffectPlayHistoryAdmin(admin.ModelAdmin):
+    list_display = ("played_at", "played_by", "sound_effect")
+    readonly_fields = ("sound_effect", "played_by", "played_at")
+
+
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(SoundEffect, SoundEffectAdmin)
 admin.site.register(SoundEffectGif)
@@ -56,4 +61,4 @@ admin.site.register(Favourites)
 admin.site.register(DiscordUser)
 admin.site.register(EventTriggeredSoundEffect)
 admin.site.register(OwEventSoundEffect)
-admin.site.register(SoundEffectPlayHistory)
+admin.site.register(SoundEffectPlayHistory, SoundEffectPlayHistoryAdmin)
