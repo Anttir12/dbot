@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import subprocess
@@ -29,8 +30,12 @@ def enough_disk_space_for_yt_stream(stream: Stream, path: str) -> bool:
     return filesize * 1.1 < free
 
 
-def extract_clip_from_file(path, start_ms, end_ms) -> BytesIO:
-    duration = (end_ms - start_ms) / 1000
+def extract_clip_from_file(path, start_ms, end_ms=None) -> BytesIO:
+    if end_ms:
+        duration = (end_ms - start_ms) / 1000
+    else:
+        audio_duration = get_duration_of_audio_file(path)
+        duration = (audio_duration - start_ms) / 1000
     command = [
         settings.FFMPEG_PATH,  # FFMPEG path
         "-loglevel", "quiet",
@@ -42,6 +47,20 @@ def extract_clip_from_file(path, start_ms, end_ms) -> BytesIO:
         "pipe:1"  # return raw data (don't make a new file)
     ]
     return BytesIO(subprocess.check_output(command))
+
+
+def get_duration_of_audio_file(path):
+    command = [
+        settings.FFPROBE_PATH,
+        "-i", path,
+        "-v", "quiet",
+        "-print_format", "json",
+        "-show_format", '-hide_banner',
+    ]
+    output = subprocess.check_output(command)
+    json_output = json.loads(output)
+    duration = float(json_output["format"]["duration"])
+    return duration * 1000
 
 
 def create_audio_file_modified_volume(path: str, volume_modifier: float, name: Optional[str] = None):
