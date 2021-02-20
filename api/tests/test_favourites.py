@@ -2,7 +2,7 @@ import os
 
 import libfaketime
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.urls import reverse
 from django.utils import timezone
@@ -15,8 +15,11 @@ from sounds.models import SoundEffect, Favourites, SoundEffectPlayHistory
 class FavouritesTest(DbotApiTest):
 
     def setUp(self):
+        bot_users = Group.objects.get(name="Bot user")
         self.user1 = User.objects.create_user("User1", "test1@example.com", "x")
         self.user2 = User.objects.create_user("User2", "test2@example.com", "x")
+        bot_users.user_set.add(self.user1)
+        bot_users.user_set.add(self.user2)
         Favourites.objects.create(name="user2 favourites", owner=self.user2)
         path = os.path.join(settings.TEST_DATA, "nerd.ogg")
         with open(path, "rb") as audio:

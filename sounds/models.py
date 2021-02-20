@@ -31,6 +31,14 @@ class Category(models.Model):
 
 
 class SoundEffect(models.Model):
+
+    class Meta:
+        permissions = [
+            ("can_play_sound_with_bot", "Can command bot to play sound"),
+            ("can_download_sound", "Can download sound"),
+            ("can_upload_clip_from_yt", "Can upload clip from YouTube"),
+        ]
+
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     last_edited = models.DateTimeField(auto_now=True)
@@ -80,6 +88,9 @@ class Favourites(models.Model):
 
     class Meta:
         unique_together = [['owner', 'name']]
+        permissions = [
+            ("can_manage_own_favourites", "Can manage own favourites"),
+        ]
 
     owner = models.ForeignKey(User, related_name="favourite_lists", on_delete=models.CASCADE)
     name = models.CharField(max_length=50, null=False)
