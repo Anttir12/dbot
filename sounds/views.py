@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.views import View
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
 
 from bot.bot import bot
@@ -38,8 +38,9 @@ class Sounds(LoginRequiredMixin, View):
                                                "filter_form": filter_form,
                                                "sounds": sounds})
 
-    @permission_required("sounds.can_upload_clip_from_yt", raise_exception=True)
     def post(self, request):
+        if not request.user.has_perm("sounds.can_upload_clip_from_yt"):
+            return HttpResponseForbidden()
         form = SoundEffectUpload(request.POST, request.FILES)
         if form.is_valid():
             if "preview" in request.POST:
