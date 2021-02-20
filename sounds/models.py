@@ -2,7 +2,7 @@ import logging
 
 from colorfield.fields import ColorField
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Permission
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -31,6 +31,14 @@ class Category(models.Model):
 
 
 class SoundEffect(models.Model):
+
+    class Meta:
+        permissions = [
+            ("can_play_sound_with_bot", "Can command bot to play sound"),
+            ("can_download_sound", "Can download sound"),
+            ("can_upload_clip_from_yt", "Can upload clip from YouTube"),
+        ]
+
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     last_edited = models.DateTimeField(auto_now=True)
@@ -79,7 +87,11 @@ class CachedStream(models.Model):
 class Favourites(models.Model):
 
     class Meta:
+        Permission
         unique_together = [['owner', 'name']]
+        permissions = [
+            ("can_manage_own_favourites", "Can manage own favourites"),
+        ]
 
     owner = models.ForeignKey(User, related_name="favourite_lists", on_delete=models.CASCADE)
     name = models.CharField(max_length=50, null=False)

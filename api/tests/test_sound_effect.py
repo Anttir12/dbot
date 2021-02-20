@@ -2,7 +2,7 @@ import os
 
 import libfaketime
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.urls import reverse
 from django.utils import timezone
@@ -15,8 +15,11 @@ from sounds.models import SoundEffect, Category
 class SoundEffectTest(DbotApiTest):
 
     def setUp(self):
+        bot_users = Group.objects.get(name="Bot user")
         self.user1 = User.objects.create_user("User1", "test1@example.com", "x")
         self.user2 = User.objects.create_user("User2", "test2@example.com", "x")
+        bot_users.user_set.add(self.user1)
+        bot_users.user_set.add(self.user2)
         self.category1 = Category.objects.create(name="category1", color_code="#000000", text_color_code="#123123")
         self.category2 = Category.objects.create(name="category2", color_code="#111111", text_color_code="#333333")
         path = os.path.join(settings.TEST_DATA, "nerd.ogg")

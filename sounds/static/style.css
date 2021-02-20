@@ -8,6 +8,7 @@
     width: 100%;
     height: 100%;
     text-align: center!important;
+    background-color: #353532 !important;
 }
 
 .sound-card .category {
@@ -21,4 +22,17 @@
     bottom:0;
     right:0;
     left:0;
+}
+
+.navbar-dark {
+    background-color: #353532 !important;
+}
+
+.dark-form .control-group {
+    margin-top: 1.5rem;
+}
+
+body {
+    background-color: #1d1d1f !important;
+    color: #fff;
 }

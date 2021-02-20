@@ -40,20 +40,9 @@ class SoundEffectDetail(RetrieveAPIView):
         return models.SoundEffect.objects.annotate(play_count=count_annotation).distinct()
 
 
-class SoundEffectFromYT(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request):
-        serializer = SoundEffectFromYTSerializer(data=request.query_params, context={"request": request})
-        if serializer.is_valid(raise_exception=True):
-            sound_effect = serializer.create_sound_effect(save=False)
-            preview_file = sound_effect.sound_effect.file.file
-            return HttpResponse(preview_file, content_type="audio/ogg")
-        return HttpResponseBadRequest()
-
-
 class CreateSoundEffectFromYt(CreateAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+    extra_permission = "sounds.can_upload_clip_from_yt"
+    permission_classes = [custom_permissions.HasExtraPermission]
     serializer_class = SoundEffectFromYTSerializer
 
     def get(self):
@@ -85,7 +74,8 @@ class SoundEffectsByCategory(ListAPIView):
 
 
 class SoundEffectAudio(UpdateAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+    extra_permission = "sounds.can_download_sound"
+    permission_classes = [custom_permissions.HasExtraPermission]
     serializer_class = SoundEffectAudioSerializer
 
     @extend_schema(
@@ -132,13 +122,15 @@ class FavouritesList(ListCreateAPIView):
 
 
 class FavouritesDetail(RetrieveAPIView):
-    permission_classes = [permissions.IsAuthenticated, custom_permissions.FavouritesOwnerPermission]
+    extra_permission = "sounds.can_manage_own_favourites"
+    permission_classes = [custom_permissions.FavouritesOwnerPermission, custom_permissions.HasExtraPermission]
     serializer_class = FavouritesMinimalSerializer
     queryset = models.Favourites.objects.all()
 
 
 class FavouritesSoundEffects(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    extra_permission = "sounds.can_manage_own_favourites"
+    permission_classes = [custom_permissions.FavouritesOwnerPermission, custom_permissions.HasExtraPermission]
 
     def get(self, request, pk):
         """
@@ -189,6 +181,7 @@ class FavouritesSoundEffects(APIView):
 
 
 class BotPlaySound(CreateAPIView):
+    extra_permission = "sounds.can_play_sound_with_bot"
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PlayBotSoundSerializer
 

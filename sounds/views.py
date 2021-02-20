@@ -1,11 +1,12 @@
 import logging
 
 from asgiref.sync import async_to_sync
+from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.views import View
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404
-from django.contrib.admin.views.decorators import staff_member_required
 
 from bot.bot import bot
 from sounds import utils
@@ -16,7 +17,7 @@ from sounds import models
 logger = logging.getLogger(__name__)
 
 
-class Sounds(View):
+class Sounds(LoginRequiredMixin, View):
 
     def get(self, request):
         form = SoundEffectUpload()
@@ -37,6 +38,7 @@ class Sounds(View):
                                                "filter_form": filter_form,
                                                "sounds": sounds})
 
+    @permission_required("sounds.can_upload_clip_from_yt", raise_exception=True)
     def post(self, request):
         form = SoundEffectUpload(request.POST, request.FILES)
         if form.is_valid():
@@ -53,7 +55,7 @@ class Sounds(View):
                                                })
 
 
-@staff_member_required
+@permission_required("sounds.can_download_sound", raise_exception=True)
 def sound_audio(request, sound_id):
     vol = request.GET.get("volume")
     sound: models.SoundEffect = get_object_or_404(models.SoundEffect, id=sound_id)
@@ -73,7 +75,7 @@ def sound_audio(request, sound_id):
     return response
 
 
-@staff_member_required
+@permission_required("sounds.can_play_sound_with_bot", raise_exception=True)
 def play_sound(request):
     user = request.user
     override = request.POST.get("override_sound", False)
