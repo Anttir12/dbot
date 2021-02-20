@@ -2,7 +2,7 @@ import logging
 
 from colorfield.fields import ColorField
 from django.conf import settings
-from django.contrib.auth.models import User, Permission
+from django.contrib.auth.models import User
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -87,7 +87,6 @@ class CachedStream(models.Model):
 class Favourites(models.Model):
 
     class Meta:
-        Permission
         unique_together = [['owner', 'name']]
         permissions = [
             ("can_manage_own_favourites", "Can manage own favourites"),

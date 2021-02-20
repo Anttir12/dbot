@@ -1,7 +1,7 @@
 import logging
 
 from asgiref.sync import async_to_sync
-from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.views import View
