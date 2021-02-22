@@ -9,10 +9,10 @@ from rest_framework.generics import get_object_or_404, ListAPIView, ListCreateAP
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api import custom_permissions, custom_renderers
+from api import custom_permissions
 from api.serializers import SoundEffectSerializer, FavouritesSerializer, SoundEffectFromYTSerializer, \
-    PlayBotSoundSerializer, SoundEffectAudioSerializer, SoundEffectAudioPreviewSerializer, \
-    FavouritesMinimalSerializer, OwEventSerializer, CategorySerializer
+    PlayBotSoundSerializer, SoundEffectAudioSerializer, FavouritesMinimalSerializer, OwEventSerializer, \
+    CategorySerializer
 
 from sounds import models, utils
 
@@ -90,21 +90,14 @@ class SoundEffectAudio(UpdateAPIView):
         sound_effect = get_object_or_404(models.SoundEffect, pk=pk)
         serializer.is_valid(raise_exception=True)
         vol = serializer.validated_data.get("volume")
-        if vol:
-            file = utils.create_audio_file_modified_volume(sound_effect.sound_effect.path, vol)
+        start_ms = serializer.validated_data.get("start_ms")
+        end_ms = serializer.validated_data.get("end_ms")
+        if vol or start_ms or end_ms:
+            file = utils.create_modified_audio_in_memory_file(sound_effect.sound_effect.path, vol, start_ms, end_ms)
         else:
             file = sound_effect.sound_effect.file
         response = HttpResponse(file, content_type="audio/ogg")
         return response
-
-    def get_object(self):
-        return models.SoundEffect.objects.get(id=self.kwargs[self.lookup_field])
-
-
-class SoundEffectAudioPreview(RetrieveAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-    renderer_classes = [custom_renderers.AudioOGGRenderer]
-    serializer_class = SoundEffectAudioPreviewSerializer
 
     def get_object(self):
         return models.SoundEffect.objects.get(id=self.kwargs[self.lookup_field])

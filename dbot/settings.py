@@ -34,7 +34,8 @@ env = environ.Env(
     DISCORD_TOKEN=(str, ""),
     DISCORD_GUILD=(str, ""),
     MAX_CACHED_STREAMS=(int, 3),
-    FFMPEG_PATH=(str, "ffmpeg")
+    FFMPEG_PATH=(str, "ffmpeg"),
+    FFPROBE_PATH=(str, "ffprobe"),
 )
 environ.Env.read_env()
 
@@ -186,11 +187,13 @@ DISCORD_GUILD = env("DISCORD_GUILD")
 MAX_CACHED_STREAMS = env("MAX_CACHED_STREAMS")
 
 FFMPEG_PATH = env("FFMPEG_PATH")
+FFPROBE_PATH = env("FFPROBE_PATH")
 
 # DRF
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }

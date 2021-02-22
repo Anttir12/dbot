@@ -1,15 +1,11 @@
 import logging
 
-from asgiref.sync import async_to_sync
-from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.views import View
 from django.http import HttpResponse, HttpResponseForbidden
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render
 
-from bot.bot import bot
-from sounds import utils
 from sounds.forms import SoundEffectUpload, SoundEffectFilter
 from sounds import models
 
@@ -54,35 +50,3 @@ class Sounds(LoginRequiredMixin, View):
                                                "filter_form": filter_form,
                                                "sounds": sounds,
                                                })
-
-
-@permission_required("sounds.can_download_sound", raise_exception=True)
-def sound_audio(request, sound_id):
-    vol = request.GET.get("volume")
-    sound: models.SoundEffect = get_object_or_404(models.SoundEffect, id=sound_id)
-
-    if vol:
-        try:
-            vol = float(vol)
-            if 0.009 <= vol <= 5.001:
-                file = utils.create_audio_file_modified_volume(sound.sound_effect.path, vol)
-                response = HttpResponse(file, content_type="audio/ogg")
-            else:
-                raise ValueError()
-        except ValueError:
-            return HttpResponse(status=400)
-    else:
-        response = HttpResponse(sound.sound_effect.file, content_type="audio/ogg")
-    return response
-
-
-@permission_required("sounds.can_play_sound_with_bot", raise_exception=True)
-def play_sound(request):
-    user = request.user
-    override = request.POST.get("override_sound", False)
-    sound_id = request.POST.get("sound_id")
-    sound_effect = get_object_or_404(models.SoundEffect, id=sound_id)
-    played = async_to_sync(bot.skills.play_sound)(sound_effect, override=override)
-    if played:
-        models.SoundEffectPlayHistory.create_record(sound_effect=sound_effect, played_by=user)
-    return HttpResponse(request, status=200)
