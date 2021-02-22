@@ -125,16 +125,19 @@ class FavouritesSerializer(serializers.ModelSerializer):
 
 class SoundEffectAudioSerializer(serializers.ModelSerializer):
     volume = serializers.FloatField(required=False, max_value=10.00, min_value=0.01)
+    start_ms = serializers.IntegerField(required=False, min_value=0)
+    end_ms = serializers.IntegerField(required=False)
     created_at = serializers.DateTimeField(read_only=True)
     created_by = serializers.SlugRelatedField(read_only=True, slug_field="username")
     categories = serializers.PrimaryKeyRelatedField(read_only=True, many=True)
 
     class Meta:
         model = models.SoundEffect
-        fields = ("id", "created_at", "created_by", "categories", "volume")
+        fields = ("id", "created_at", "created_by", "categories", "volume", "start_ms", "end_ms")
 
     def update(self, instance, validated_data):
-        utils.modify_sound_effect_volume(instance, validated_data["volume"])
+        utils.modify_sound_effect(instance, volume_modifier=validated_data["volume"],
+                                  start_ms=validated_data["start_ms"], end_ms=validated_data["end_ms"])
         return instance
 
     def to_representation(self, instance):

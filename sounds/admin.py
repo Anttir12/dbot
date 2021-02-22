@@ -1,11 +1,6 @@
-import os
-import sys
-
 from django.contrib import admin
 
-# Register your models here.
 from django import forms
-from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.forms import widgets
 
 from . import utils
@@ -51,19 +46,8 @@ class SoundEffectAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj: SoundEffect, form, change):
         super().save_model(request, obj, form, change)
-        volume = form.cleaned_data.get("volume")
-        if volume and volume != 1.0:  # Skip if this has no effect
-            utils.modify_sound_effect_volume(obj, form.cleaned_data["volume"])
-        start_ms = form.cleaned_data.get("start_ms")
-        end_ms = form.cleaned_data.get("end_ms")
-        if start_ms is not None:
-            old_file = obj.sound_effect
-            clip_data = utils.extract_clip_from_file(old_file.path, start_ms, end_ms)
-            size = sys.getsizeof(clip_data)
-            file = InMemoryUploadedFile(clip_data, "sound_effect", old_file.name, None, size, None)
-            obj.sound_effect = file
-            obj.save()
-            os.remove(old_file.path)
+        utils.modify_sound_effect(obj, volume_modifier=form.cleaned_data["volume"],
+                                  start_ms=form.cleaned_data["start_ms"], end_ms=form.cleaned_data["end_ms"])
 
 
 class CategoryAdmin(admin.ModelAdmin):

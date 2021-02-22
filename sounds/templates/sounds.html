@@ -42,13 +42,13 @@
                 </div>
             </form>
         </div>
-        <form action="{% url 'play_sound' %}" method="post" id="soundboard">
+        <form action="{% url 'api:play_sound' %}" method="post" id="soundboard">
         <div class="row">
             {% csrf_token %}
             <div class="col">
                 <div class="d-inline-block" id="audio-player"></div>
                 <div class="d-inline-block">
-                    <input id="override-sound" type="checkbox" name="override_sound" value="1">
+                    <input id="override-sound" type="checkbox" name="override" value="1">
                     <label for="override-sound">Override current sound</label>
                     <input id="browser-sound" type="checkbox" name="browser" value="1">
                     <label for="browser-sound">Play sound only in browser</label>
@@ -59,7 +59,7 @@
         <div class="row">
             {% for sound in sounds %}
                 <div class="col-xl-2 col-lg-2 col-3 mt-3 sound-card-wrapper" style="height:100px;">
-                    <div class="bg-primary sound-card" data-value="{{sound.id}}" data-url="{% url 'sound_audio' sound.id %}">
+                    <div class="bg-primary sound-card" data-value="{{sound.id}}" data-url="{% url 'api:sound_effect_audio' sound.id %}">
                         {% for category in sound.categories.all|slice:3 %}
                             <div class="category" style="background-color:{{category.color_code}};">
                                 <span style="color:{{category.text_color_code}}">{{category.name}}</span>
@@ -121,17 +121,20 @@
                 `
                 $("#audio-player").html(html);
             }else{
-                var data = $("#soundboard").serializeArray();
-                data.push({"name": "sound_id", "value": $(this).attr("data-value")});
+                let data = {
+                    "override": $("#override-sound").is(":checked"),
+                    "sound_effect_id": $(this).attr("data-value"),
+                    "csrfmiddlewaretoken": $('#soundboard input[name="csrfmiddlewaretoken"]').val()
+                };
                 console.log(data);
                 $.ajax({
                     type: "POST",
-                    url: "{% url 'play_sound' %}",
+                    url: "{% url 'api:play_sound' %}",
                     data: data,
-                    success: function(response) {
+                    success: function() {
                         console.log("Success")
                     },
-                    error: function(response) {
+                    error: function() {
                         console.log("Error")
                     }
                 });

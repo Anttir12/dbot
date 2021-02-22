@@ -2,7 +2,7 @@ import os
 from unittest.mock import patch
 
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.urls import reverse
 
@@ -14,7 +14,9 @@ from sounds.models import SoundEffect
 class BotActionTest(DbotApiTest):
 
     def setUp(self):
+        bot_users = Group.objects.get(name="Bot user")
         self.user1 = User.objects.create_user("User1", "test1@example.com", "x")
+        bot_users.user_set.add(self.user1)
         path = os.path.join(settings.TEST_DATA, "nerd.ogg")
         with open(path, "rb") as audio:
             size = os.path.getsize(path)

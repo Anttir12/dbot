@@ -4,13 +4,22 @@
     {{ block.super }}
     {% if adminform.form.instance.id %}
     <script>
-        document.addEventListener("DOMContentLoaded", function(event) {
+        document.addEventListener("DOMContentLoaded", function() {
             document.getElementById('{{ opts.model_name }}_preview').addEventListener('click', function(event){
                 event.preventDefault();
                 let volume = document.getElementById("id_volume").value;
+                let start_ms = document.getElementById("id_start_ms").value;
+                let end_ms = document.getElementById("id_end_ms").value;
+                let query_params = "volume="+volume
+                if (start_ms !== undefined && start_ms !== null && start_ms !== ""){
+                    query_params += "&start_ms="+start_ms
+                }
+                if (end_ms !== undefined && end_ms !== null && end_ms !== ""){
+                    query_params += "&end_ms="+end_ms
+                }
                 let new_html = `
                 <audio controls autoplay controlsList="nodownload">
-                    <source id="audio-source" src="{% url 'sound_audio' object_id %}?volume=${volume}">
+                    <source id="audio-source" src="{% url 'api:sound_effect_audio' object_id %}?${query_params}">
                 </audio>
                 `
                 console.log("Volume: "+volume);
@@ -29,7 +38,7 @@
    {% if adminform.form.instance.id %}
     <div id="audio-preview-wrapper">
         <audio controls controlsList="nodownload">
-            <source id="audio-source" src="{% url 'sound_audio' object_id %}">
+            <source id="audio-source" src="{% url 'api:sound_effect_audio' object_id %}">
         </audio>
     </div>
     {% endif %}
