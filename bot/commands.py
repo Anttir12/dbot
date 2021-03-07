@@ -34,10 +34,12 @@ class DiscoBotCommands(commands.Cog):
             await ctx.voice_client.disconnect()
 
     @commands.command()
-    async def play(self, ctx: Context, yt_url: str):
+    async def play(self, ctx: Context, yt_url: str, volume: Optional[float] = None):
+        if volume:
+            volume = float(volume)
         yt_url = clean_url(yt_url)
         try:
-            await self.skills.play_from_yt_url(yt_url)
+            await self.skills.play_from_yt_url(yt_url, volume)
         except SkillException as skill_exception:
             await ctx.message.channel.send(f"Error while trying to play from url: {yt_url}: {skill_exception}")
 
