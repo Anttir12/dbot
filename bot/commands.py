@@ -15,11 +15,11 @@ logger = logging.getLogger(__name__)
 class DiscoBotCommands(commands.Cog):
 
     def __init__(self, skills: DBotSkills):
-        self.sound_effects = "/home/antti/git/discobot/soundeffects/"
         super().__init__()
         self.skills: DBotSkills = skills
 
     @commands.command()
+    @commands.guild_only()
     async def join(self, ctx: Context):
         if self.skills.guild.voice_client:
             await self.skills.guild.voice_client.disconnect()
@@ -29,12 +29,17 @@ class DiscoBotCommands(commands.Cog):
             await ctx.message.channel.send("You are not in a voice channel")
 
     @commands.command()
+    @commands.guild_only()
     async def leave(self, ctx: Context):
         if ctx.voice_client:
             await ctx.voice_client.disconnect()
 
     @commands.command()
+    @commands.guild_only()
     async def play(self, ctx: Context, yt_url: str, volume: Optional[float] = None):
+        """
+            Plays sound from youtube. Usage: !play <yt_url> <Optional volume (0-2)>
+        """
         if volume:
             volume = float(volume)
         yt_url = clean_url(yt_url)
@@ -44,6 +49,7 @@ class DiscoBotCommands(commands.Cog):
             await ctx.message.channel.send(f"Error while trying to play from url: {yt_url}: {skill_exception}")
 
     @commands.command()
+    @commands.guild_only()
     async def list_sounds(self, ctx: Context):
         name_query = await sync_to_async(SoundEffect.objects.values_list)("name", flat=True)
         name_query = await sync_to_async(name_query.order_by)("name")
@@ -51,6 +57,7 @@ class DiscoBotCommands(commands.Cog):
         await ctx.message.channel.send("Available sound effects:\n{}".format("\n".join(names)))
 
     @commands.command(name="!")
+    @commands.guild_only()
     async def sound(self, ctx: Context, name):
         sound_effects = await sync_to_async(SoundEffect.objects.filter)(Q(name=name) |
                                                                         Q(alternativename__name=name))
@@ -58,25 +65,25 @@ class DiscoBotCommands(commands.Cog):
         await self.skills.play_sound(sound_effect, ctx.message.channel)
 
     @commands.command()
+    @commands.guild_only()
     async def stop(self, ctx: Context):
         if ctx.voice_client:
             ctx.voice_client.stop()
 
     @commands.command()
+    @commands.guild_only()
     async def pause(self, ctx: Context):
         if ctx.voice_client and ctx.voice_client.is_playing():
             ctx.voice_client.pause()
 
     @commands.command()
+    @commands.guild_only()
     async def resume(self, ctx: Context):
         if ctx.voice_client and ctx.voice_client.is_paused():
             ctx.voice_client.resume()
 
     @commands.command()
-    async def test(self, ctx: Context):
-        await ctx.message.channel.send("https://tenor.com/view/cowboy-screaming-big-enough-gif-11112189")
-
-    @commands.command()
+    @commands.guild_only()
     async def this_channel(self, ctx: Context, leave=False):
         if leave:
             self.skills.channel = None
@@ -84,6 +91,7 @@ class DiscoBotCommands(commands.Cog):
             await self.skills.set_channel(ctx)
 
     @commands.command()
+    @commands.guild_only()
     async def volume(self, ctx, volume: Optional[float] = None):
         if volume is None:
             await ctx.message.channel.send(f"Current volume is: {self.skills.volume}")
