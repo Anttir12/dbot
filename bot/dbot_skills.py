@@ -40,14 +40,16 @@ class DBotSkills:
         voice_client.play(audio)
         return True
 
-    async def play_from_yt_url(self, yt_url: str):
+    async def play_from_yt_url(self, yt_url: str, volume=None):
+        if not volume or volume > 2:
+            volume = self.volume
         cached_stream = await sync_to_async(utils.get_stream)(yt_url)
         if cached_stream:
             source = cached_stream.file.path
             if self.guild.voice_client:
                 if self.channel:
                     self.channel.send("Now playing {}".format(cached_stream.title))
-                audio = PCMVolumeTransformer(FFmpegPCMAudio(source), self.volume)
+                audio = PCMVolumeTransformer(FFmpegPCMAudio(source), volume)
                 self.guild.voice_client.play(audio)
             else:
                 logger.info("Unable to find voice client")
