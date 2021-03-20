@@ -46,20 +46,29 @@ class SoundEffectTest(DbotApiTest):
              'created_at': self.created_at_drf,
              'created_by': "User1",
              'name': 'sound_effect_1',
-             'play_count': 0,
+             'my_total_play_count': 0,
+             'my_30d_play_count': 0,
+             'play_count_month': 0,
+             'total_play_count': 0,
              'categories': ["category1"]},
             {'id': 2,
              'created_at': self.created_at_drf,
              'created_by': "User1",
              'name': 'sound_effect_2',
-             'play_count': 0,
+             'my_total_play_count': 0,
+             'my_30d_play_count': 0,
+             'play_count_month': 0,
+             'total_play_count': 0,
              'categories': []
              },
             {'id': 3,
              'created_at': self.created_at_drf,
              'created_by': "User2",
              'name': 'sound_effect_3',
-             'play_count': 0,
+             'my_total_play_count': 0,
+             'my_30d_play_count': 0,
+             'play_count_month': 0,
+             'total_play_count': 0,
              'categories': ["category1", "category2"]
              }])
         self.assertEqual(3, len(response.json()))
@@ -71,7 +80,10 @@ class SoundEffectTest(DbotApiTest):
                                            'created_at': self.created_at_drf,
                                            'created_by': "User1",
                                            'name': 'sound_effect_1',
-                                           'play_count': 0,
+                                           'my_total_play_count': 0,
+                                           'my_30d_play_count': 0,
+                                           'play_count_month': 0,
+                                           'total_play_count': 0,
                                            'categories': ["category1"]})
 
     def test_get_sound_effect_audio(self):
