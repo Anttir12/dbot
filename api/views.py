@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api import custom_permissions
+from api import api_utils
 from api.serializers import SoundEffectSerializer, FavouritesSerializer, SoundEffectFromYTSerializer, \
     PlayBotSoundSerializer, SoundEffectAudioSerializer, FavouritesMinimalSerializer, OwEventSerializer, \
     CategorySerializer
@@ -25,9 +26,8 @@ class SoundEffectList(ListAPIView):
     serializer_class = SoundEffectSerializer
 
     def get_queryset(self):
-        user = self.request.user
-        count_annotation = Count("play_history__played_by", filter=Q(play_history__played_by=user), distinct=False)
-        return models.SoundEffect.objects.annotate(play_count=count_annotation).distinct()
+        qs = api_utils.add_sound_effect_count_annotation(self.request.user, models.SoundEffect.objects.distinct())
+        return qs
 
 
 class SoundEffectDetail(RetrieveAPIView):
@@ -35,9 +35,8 @@ class SoundEffectDetail(RetrieveAPIView):
     serializer_class = SoundEffectSerializer
 
     def get_queryset(self):
-        user = self.request.user
-        count_annotation = Count("play_history__played_by", filter=Q(play_history__played_by=user), distinct=False)
-        return models.SoundEffect.objects.annotate(play_count=count_annotation).distinct()
+        qs = api_utils.add_sound_effect_count_annotation(self.request.user, models.SoundEffect.objects.distinct())
+        return qs
 
 
 class CreateSoundEffectFromYt(CreateAPIView):
@@ -131,9 +130,9 @@ class FavouritesSoundEffects(APIView):
         """
         user = request.user
         favourites = get_object_or_404(models.Favourites, id=pk, owner=user)
-        count_annotation = Count("play_history__played_by", filter=Q(play_history__played_by=user), distinct=False)
-        serializer = SoundEffectSerializer(favourites.sound_effects.annotate(play_count=count_annotation).all(),
-                                           many=True)
+        qs = favourites.sound_effects.all()
+        qs = api_utils.add_sound_effect_count_annotation(user, qs)
+        serializer = SoundEffectSerializer(qs, many=True)
         return Response(serializer.data)
 
     def post(self, request, pk):
