@@ -47,7 +47,7 @@ class SoundEffectTest(DbotApiTest):
              'created_by': "User1",
              'name': 'sound_effect_1',
              'my_total_play_count': 0,
-             'my_30d_play_count': 0,
+             'my_play_count_month': 0,
              'play_count_month': 0,
              'total_play_count': 0,
              'categories': ["category1"]},
@@ -56,7 +56,7 @@ class SoundEffectTest(DbotApiTest):
              'created_by': "User1",
              'name': 'sound_effect_2',
              'my_total_play_count': 0,
-             'my_30d_play_count': 0,
+             'my_play_count_month': 0,
              'play_count_month': 0,
              'total_play_count': 0,
              'categories': []
@@ -66,7 +66,7 @@ class SoundEffectTest(DbotApiTest):
              'created_by': "User2",
              'name': 'sound_effect_3',
              'my_total_play_count': 0,
-             'my_30d_play_count': 0,
+             'my_play_count_month': 0,
              'play_count_month': 0,
              'total_play_count': 0,
              'categories': ["category1", "category2"]
@@ -81,7 +81,7 @@ class SoundEffectTest(DbotApiTest):
                                            'created_by': "User1",
                                            'name': 'sound_effect_1',
                                            'my_total_play_count': 0,
-                                           'my_30d_play_count': 0,
+                                           'my_play_count_month': 0,
                                            'play_count_month': 0,
                                            'total_play_count': 0,
                                            'categories': ["category1"]})

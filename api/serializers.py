@@ -17,13 +17,13 @@ class SoundEffectSerializer(serializers.ModelSerializer):
     categories = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
     created_by = serializers.SlugRelatedField(read_only=True, slug_field="username")
     my_total_play_count = serializers.IntegerField(read_only=True)
-    my_30d_play_count = serializers.IntegerField(read_only=True)
+    my_play_count_month = serializers.IntegerField(read_only=True)
     play_count_month = serializers.IntegerField(read_only=True)
     total_play_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = models.SoundEffect
-        fields = ["id", "created_at", "created_by", "name", "my_total_play_count", "my_30d_play_count",
+        fields = ["id", "created_at", "created_by", "name", "my_total_play_count", "my_play_count_month",
                   "play_count_month", "total_play_count", "categories"]
 
 
