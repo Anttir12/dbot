@@ -75,8 +75,12 @@ class SoundEffectFromYTSerializer(serializers.ModelSerializer):
         if save:
             with transaction.atomic():
                 instance.save()
-                for category in validated_data["categories"]:
-                    instance.categories.add(category)
+                if validated_data["categories"]:
+                    for category in validated_data["categories"]:
+                        instance.categories.add(category)
+                else:
+                    default_category = models.Category.objects.get(name="No category")
+                    instance.categories.add(default_category)
         return instance
 
     def create(self, validated_data):

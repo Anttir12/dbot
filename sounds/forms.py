@@ -66,6 +66,8 @@ class SoundEffectUpload(forms.ModelForm):
         self.cleaned_data["sound_effect"] = file
         self.files["sound_effect"] = file
         self.instance.sound_effect = file
+        if not self.cleaned_data.get("categories"):
+            self.cleaned_data["categories"] = [Category.objects.get(name="No category").id]
 
     def save(self, commit=True):
         sound_effect = super().save(commit)
