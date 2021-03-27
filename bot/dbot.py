@@ -112,6 +112,7 @@ class DiscoBot(commands.Bot):
         if voice_client:
             await voice_client.disconnect()
         await channel.connect()
+        self.skills.reset_sound_queue()
 
     async def check_if_we_should_leave_voice(self):
         voice_client = self.guild.voice_client if self.guild else None

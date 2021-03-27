@@ -16,6 +16,9 @@ from pathlib import Path
 import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db.models import IntegerField
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(
@@ -29,6 +32,7 @@ env = environ.Env(
     DATABASE_PASSWORD=(str, 'OMWDESYBPASSWORD'),
     DATABASE_HOST=(str, '127.0.0.1'),
     DATABASE_PORT=(int, 5432),
+    CONSTANCE_REDIS_URL=(str, 'redis://localhost:6379/8'),
     STATIC_ROOT=(str, os.path.join(BASE_DIR, 'static/')),
     COMMAND_PREFIX=(str, "!"),
     DISCORD_TOKEN=(str, ""),
@@ -68,6 +72,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'drf_spectacular',
+    'constance',
 ]
 
 MIDDLEWARE = [
@@ -212,3 +217,18 @@ if DEBUG:
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+
+# CONSTANCE
+
+CONSTANCE_REDIS_CONNECTION = env('CONSTANCE_REDIS_URL')
+
+CONSTANCE_ADDITIONAL_FIELDS = {
+    'min_1_max_10': ['django.forms.fields.IntegerField', {
+        'validators': [MaxValueValidator(10), MinValueValidator(1)]
+    }]
+}
+CONSTANCE_CONFIG = {
+    "MAX_QUEUE_SIZE": (3, "Max queue size for sound effects", "min_1_max_10"),
+    "SOUNDS_ONLY_FROM_CHANNEL": (False, "Sound effects can only be triggered by users from the same channel as bot"),
+}
