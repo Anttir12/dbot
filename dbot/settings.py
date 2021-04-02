@@ -17,7 +17,6 @@ import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db.models import IntegerField
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -230,5 +229,6 @@ CONSTANCE_ADDITIONAL_FIELDS = {
 }
 CONSTANCE_CONFIG = {
     "MAX_QUEUE_SIZE": (3, "Max queue size for sound effects", "min_1_max_10"),
-    "SOUNDS_ONLY_FROM_CHANNEL": (False, "Sound effects can only be triggered by users from the same channel as bot"),
+    "SOUNDS_ONLY_FROM_CHANNEL": (False, "Sound effects can only be triggered by users from the "
+                                        "same channel as bot (NYI)"),
 }

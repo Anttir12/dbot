@@ -100,7 +100,7 @@ class DiscoBotCommands(commands.Cog):
         if not 0 <= volume <= 1:
             await ctx.message.channel.send("Volume has to be between 0 and 1")
             return
-        self.skills.volume = volume
+        self.skills.set_volume(volume)
 
 
 def clean_url(url: str):

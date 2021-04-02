@@ -91,6 +91,7 @@ class DiscoBot(commands.Bot):
         else:
             # Bot itself just joined to channel
             if before.channel != after.channel and voice_client:
+                self.skills.reinitialise_player()
                 await utils.run_task_with_delay(0.5, self.skills.greetings_joining_voice())
 
     async def auto_join_condition_met(self, member):
