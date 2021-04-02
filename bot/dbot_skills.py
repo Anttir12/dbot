@@ -163,7 +163,7 @@ class Player:
                         if not self.voice_client:
                             logger.warning("Trying to play sound_queue without voice client. "
                                            "Clearing sound queue and returning...")
-                            self.sound_deque.clear()
+                            self.clear_queue()
                             break
 
                         path, volume = self.sound_deque.popleft()
@@ -180,3 +180,6 @@ class Player:
         else:
             return False
         return True
+
+    def clear_queue(self):
+        self.sound_deque.clear()

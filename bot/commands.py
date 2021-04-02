@@ -68,6 +68,13 @@ class DiscoBotCommands(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def stop(self, ctx: Context):
+        self.skills.player.clear_queue()
+        if ctx.voice_client:
+            ctx.voice_client.stop()
+
+    @commands.command()
+    @commands.guild_only()
+    async def next(self, ctx: Context):
         if ctx.voice_client:
             ctx.voice_client.stop()
 
