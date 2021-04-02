@@ -11,9 +11,13 @@ services:
     - "127.0.0.1:4322:4322"
     depends_on:
       - db
+      - redis
     volumes:
       - ~/dbot_data/uploads:/app/uploads
       - /tmp:/tmp
+
+  redis:
+    image: redis
 
   db:
     image: postgres:12
