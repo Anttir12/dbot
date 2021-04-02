@@ -166,7 +166,7 @@ class Player:
                 finally:
                     self.sound_queue_play_lock.release()
 
-            t = threading.Thread(play())
+            t = threading.Thread(target=play)
             t.start()
         else:
             return False
