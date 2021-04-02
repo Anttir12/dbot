@@ -170,7 +170,7 @@ class Player:
                         volume = 2 if volume > 2 else volume  # Make sure volume can't be over 2 to preserve hearing
                         audio = PCMVolumeTransformer(FFmpegPCMAudio(path), volume)
                         self.voice_client.play(audio)
-                        while self.voice_client.is_playing():
+                        while self.voice_client.is_playing() or self.voice_client.is_paused():
                             sleep(0.05)
                 finally:
                     self.sound_queue_play_lock.release()
