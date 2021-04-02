@@ -49,7 +49,7 @@ class DBotSkills:
             if self.guild.voice_client:
                 if self.channel:
                     self.channel.send("Now playing {}".format(cached_stream.title))
-                self.player.play_sound_now(source, volume)
+                self.player.add_to_queue_and_play(source, volume)
             else:
                 logger.info("Unable to find voice client")
         else:
