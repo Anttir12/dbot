@@ -155,7 +155,7 @@ class Player:
         return self.play_sound_now(path, volume)
 
     def play_queue(self):
-        if self.sound_queue_play_lock.acquire(blocking=True, timeout=0.5):
+        if self.sound_queue_play_lock.acquire(blocking=True, timeout=0.1):
 
             def play():
                 try:
@@ -171,7 +171,7 @@ class Player:
                         audio = PCMVolumeTransformer(FFmpegPCMAudio(path), volume)
                         self.voice_client.play(audio)
                         while self.voice_client.is_playing():
-                            sleep(0.1)
+                            sleep(0.05)
                 finally:
                     self.sound_queue_play_lock.release()
 

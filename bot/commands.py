@@ -62,7 +62,8 @@ class DiscoBotCommands(commands.Cog):
         sound_effects = await sync_to_async(SoundEffect.objects.filter)(Q(name=name) |
                                                                         Q(alternativename__name=name))
         sound_effect = await sync_to_async(sound_effects.first)()
-        await self.skills.play_sound(sound_effect, ctx.message.channel)
+        if sound_effect:
+            await self.skills.play_sound(sound_effect, ctx.message.channel)
 
     @commands.command()
     @commands.guild_only()
@@ -94,7 +95,7 @@ class DiscoBotCommands(commands.Cog):
     @commands.guild_only()
     async def volume(self, ctx, volume: Optional[float] = None):
         if volume is None:
-            await ctx.message.channel.send(f"Current volume is: {self.skills.volume}")
+            await ctx.message.channel.send(f"Current volume is: {self.skills.player.volume}")
             return
         volume = float(volume)
         if not 0 <= volume <= 1:
