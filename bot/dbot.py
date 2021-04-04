@@ -22,7 +22,7 @@ class DiscoBot(commands.Bot):
         super().__init__(**options)
         self.guild_name = guild_name
         self.guild: Optional[Guild] = None
-        self.skills = DBotSkills()
+        self.skills = DBotSkills(self.loop)
         self.add_cog(DiscoBotCommands(self.skills))
         opus_lib = ctypes.util.find_library("opus")
         discord.opus.load_opus(opus_lib)

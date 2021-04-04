@@ -1,4 +1,5 @@
 import logging
+import threading
 from typing import Optional
 
 from asgiref.sync import sync_to_async
@@ -58,12 +59,12 @@ class DiscoBotCommands(commands.Cog):
 
     @commands.command(name="!")
     @commands.guild_only()
-    async def sound(self, ctx: Context, name):
+    async def sound(self, _: Context, name):
         sound_effects = await sync_to_async(SoundEffect.objects.filter)(Q(name=name) |
                                                                         Q(alternativename__name=name))
         sound_effect = await sync_to_async(sound_effects.first)()
         if sound_effect:
-            await self.skills.play_sound(sound_effect, ctx.message.channel)
+            await self.skills.play_sound(sound_effect)
 
     @commands.command()
     @commands.guild_only()
@@ -109,6 +110,13 @@ class DiscoBotCommands(commands.Cog):
             await ctx.message.channel.send("Volume has to be between 0 and 1")
             return
         self.skills.set_volume(volume)
+
+    @commands.command()
+    async def speak(self, ctx: Context, tts: str, volume: Optional[float]):
+        if volume:
+            volume = float(volume)
+        thread = threading.Thread(target=self.skills.speak, args=(ctx.channel, tts, volume))
+        thread.start()
 
 
 def clean_url(url: str):
