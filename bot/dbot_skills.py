@@ -2,13 +2,16 @@ import asyncio
 import collections
 import logging
 import random
+import subprocess
 import threading
+from asyncio import AbstractEventLoop
 from time import sleep
 from typing import Optional
+from uuid import uuid4
 
 from asgiref.sync import sync_to_async
 from constance import config
-from discord import FFmpegPCMAudio, Guild, PCMVolumeTransformer, VoiceClient
+from discord import FFmpegPCMAudio, Guild, PCMVolumeTransformer, VoiceClient, TextChannel
 from discord.ext.commands import Context
 
 from sounds import utils, models
@@ -23,12 +26,14 @@ class SkillException(Exception):
 
 class DBotSkills:
 
-    def __init__(self):
+    def __init__(self, loop: AbstractEventLoop):
         self.guild: Optional[Guild] = None
         self.channel = None
         self.default_volume = 0.8
         self.player = Player(voice_client=self.guild.voice_client if self.guild else None,
                              default_volume=self.default_volume)
+        self.loop: AbstractEventLoop = loop
+        self.tts = Tts()
 
     async def play_sound(self, sound_effect: SoundEffect, override=False):
         voice_client = self.guild.voice_client
@@ -117,6 +122,15 @@ class DBotSkills:
         self.default_volume = volume
         self.player.volume = volume
 
+    def speak(self, channel: TextChannel, tts, volume: Optional[float]):
+        try:
+            filename = self.tts.create_file_from_text(tts)
+            self.player.play_sound_now(filename, volume)
+        except TTSAlreadyProcessingException:
+            self.loop.create_task(channel.send("Cannot process multiple TTS's at the same time"))
+        except TTSProcessException as e:
+            self.loop.create_task(channel.send("Something went wrong with the TTS process. {}".format(e)))
+
 
 class Player:
 
@@ -183,3 +197,34 @@ class Player:
 
     def clear_queue(self):
         self.sound_deque.clear()
+
+
+class Tts:
+
+    def __init__(self):
+        self.tts_lock = threading.Lock()
+
+    def create_file_from_text(self, tts: str):
+        if not self.tts_lock.acquire(blocking=True, timeout=0.1):
+            raise TTSAlreadyProcessingException
+        try:
+            filename = "/tmp/{}.wav".format(str(uuid4()))
+            # TODO: Find out if/how this can be done directly via python
+            command = 'tts  --text "{tts}" ' \
+                      '--model_name "tts_models/en/ljspeech/tacotron2-DCA" ' \
+                      '--vocoder_name "vocoder_models/en/ljspeech/multiband-melgan" ' \
+                      f'--out_path {filename}'.format(tts=tts, filename=filename)
+            output = subprocess.call(command, shell=True)
+            if output == 0:
+                return filename
+            raise TTSProcessException("tts returned with non-zero exit code {}".format(output))
+        finally:
+            self.tts_lock.release()
+
+
+class TTSAlreadyProcessingException(Exception):
+    pass
+
+
+class TTSProcessException(Exception):
+    pass
