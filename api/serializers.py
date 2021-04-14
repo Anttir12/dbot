@@ -75,7 +75,7 @@ class SoundEffectFromYTSerializer(serializers.ModelSerializer):
         if save:
             with transaction.atomic():
                 instance.save()
-                if validated_data["categories"]:
+                if validated_data.get("categories"):
                     for category in validated_data["categories"]:
                         instance.categories.add(category)
                 else:
@@ -167,7 +167,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Category
-        fields = ("name", "color_code", "text_color_code")
+        fields = ("id", "name", "color_code", "text_color_code")
 
 
 class PlayBotSoundSerializer(serializers.Serializer):
