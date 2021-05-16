@@ -44,8 +44,8 @@ class CreateSoundEffectFromYt(CreateAPIView):
     permission_classes = [custom_permissions.HasExtraPermission]
     serializer_class = SoundEffectFromYTSerializer
 
-    def get(self):
-        serializer = self.serializer_class()
+    def get(self, request):
+        serializer = self.serializer_class(data=request.query_params, context={"request": request})
         if serializer.is_valid(raise_exception=True):
             sound_effect = serializer.create_sound_effect(save=False)
             preview_file = sound_effect.sound_effect.file.file

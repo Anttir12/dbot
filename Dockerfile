@@ -9,9 +9,9 @@ RUN apt-get update && apt-get install -y libffi-dev python3-dev libnacl-dev buil
 RUN pip install daphne
 
 COPY requirements_no_cache_dir.txt .
-COPY requirements.txt .
-
 RUN pip --no-cache-dir install -r requirements_no_cache_dir.txt
+
+COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 ADD . /app/
