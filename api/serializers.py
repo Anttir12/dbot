@@ -45,6 +45,13 @@ class SoundEffectFromYTSerializer(serializers.ModelSerializer):
             raise ValidationError(f"Sound Effect with name {value} already exists")
         return value
 
+    def validate_yt_url(self, value):
+        try:
+            utils.get_yt_id_from_url(value)
+        except YtException as yte:
+            raise ValidationError(str(yte))
+        return value
+
     def validate(self, attrs):
         start_ms = attrs.get("start_ms")
         end_ms = attrs.get("end_ms")
