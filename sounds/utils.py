@@ -10,10 +10,9 @@ from typing import Optional
 from urllib.parse import urlparse, parse_qs
 
 import magic
-import pytube
+import youtube_dl
 from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from pytube import Stream
 
 from sounds.models import CachedStream, SoundEffect
 
@@ -22,12 +21,6 @@ logger = logging.getLogger(__name__)
 
 class YtException(Exception):
     pass
-
-
-def enough_disk_space_for_yt_stream(stream: Stream, path: str) -> bool:
-    filesize = stream.filesize_approx
-    _, _, free = shutil.disk_usage(path)
-    return filesize * 1.1 < free
 
 
 def extract_clip_from_file(path, start_ms, end_ms=None) -> BytesIO:
@@ -111,23 +104,32 @@ def get_stream(yt_url) -> CachedStream:
 
 
 def download_stream_and_cache_it(yt_url, yt_id) -> CachedStream:
-    try:
-        y_t = pytube.YouTube(yt_url)
-    except Exception as broad_except:  # pylint: disable=broad-except
-        raise YtException("Unable to load streams from {}".format(yt_url)) from broad_except
+    with youtube_dl.YoutubeDL() as ydl:
+        info_dict = ydl.extract_info(yt_url, download=False)
+        video_title: str = info_dict.get('title', "title_now_found")
+        video_title = video_title.replace(" ", "_").replace("&", "_")
 
-    filtered = y_t.streams.filter(audio_codec="opus").order_by('bitrate').desc().first()
-    if not enough_disk_space_for_yt_stream(filtered, "/tmp"):
-        raise YtException("Not enough disk space to download yt stream")
-    source = filtered.download("/tmp/streams")
-    title = filtered.title
+    source = '/tmp/streams/{}.mp3'.format(video_title)
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': source,
+        'restrictfilenames': True,
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+        'logger': logger
+    }
+    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([yt_url])
     size = os.path.getsize(source)
     with open(source, 'rb') as ytaudio:
         ytaudio.seek(0)
         mime_type = magic.from_buffer(ytaudio.read(1024), mime=True)
         ytaudio.seek(0)
         file = InMemoryUploadedFile(ytaudio, "sound_effect", os.path.basename(source), mime_type, size, None)
-        cached_stream = CachedStream(title=title, yt_id=yt_id, file=file, size=filtered.filesize_approx)
+        cached_stream = CachedStream(title=video_title, yt_id=yt_id, file=file, size=size)
         cached_stream.save(remove_oldest_if_full=True)
         os.remove(source)
     return cached_stream
