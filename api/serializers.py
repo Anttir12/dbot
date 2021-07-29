@@ -55,9 +55,11 @@ class SoundEffectFromYTSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         start_ms = attrs.get("start_ms")
         end_ms = attrs.get("end_ms")
+        attrs["start_ms"] = start_ms if start_ms else None  # Convert "" and 0 to None
+        attrs["end_ms"] = end_ms if end_ms else None  # Convert "" and 0 to None
         # If start and end ms exist. Replace file with clipped version
-        if start_ms is not None and end_ms is not None:
-            if end_ms <= start_ms:
+        if attrs["start_ms"] is not None and attrs["end_ms"] is not None:
+            if attrs["end_ms"] <= attrs["start_ms"]:
                 raise ValidationError("End time has to be bigger than start time")
         return attrs
 
@@ -69,8 +71,8 @@ class SoundEffectFromYTSerializer(serializers.ModelSerializer):
             path = cached_stream.file.path
         except YtException as ex:
             raise APIException(str(ex)) from ex
-        if "start_ms" in validated_data and "end_ms" in validated_data:
-            clip_data = utils.extract_clip_from_file(path, validated_data["start_ms"], validated_data["end_ms"])
+        if validated_data.get("start_ms") or validated_data.get("end_ms"):
+            clip_data = utils.extract_clip_from_file(path, validated_data.get("start_ms"), validated_data.get("end_ms"))
             size = sys.getsizeof(clip_data)
             file = InMemoryUploadedFile(clip_data, "sound_effect", validated_data["name"], None, size, None)
         else:
