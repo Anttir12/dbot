@@ -118,6 +118,19 @@ class DiscoBotCommands(commands.Cog):
         thread = threading.Thread(target=self.skills.speak, args=(ctx.channel, tts, volume))
         thread.start()
 
+    @commands.command()
+    @commands.guild_only()
+    async def roll(self, ctx: Context, dice_size: int = 100):
+        results = self.skills.roll(dice_size)
+        if results:
+            message = "```"
+            for result in results:
+                message += f"\n{result['name']}: {result['result']}"
+            message += "\n```"
+            await ctx.message.channel.send(message)
+        else:
+            await ctx.message.channel.send(f"Unable to roll. I need to be in voice channel with someone")
+
 
 def clean_url(url: str):
     url = url.strip()
