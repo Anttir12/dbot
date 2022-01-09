@@ -39,6 +39,7 @@ class DiscoBot(commands.Bot):
         if guild:
             logger.info("Guild found!")
             self.skills.guild = guild
+            self.skills.user = self.user
             self.guild = guild
             await utils.run_task_with_delay(2, self.update_discord_user_table())
         else:

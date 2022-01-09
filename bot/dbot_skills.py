@@ -9,7 +9,7 @@ from typing import Optional
 
 from asgiref.sync import sync_to_async
 from constance import config
-from discord import FFmpegPCMAudio, Guild, PCMVolumeTransformer, VoiceClient, TextChannel
+from discord import FFmpegPCMAudio, Guild, PCMVolumeTransformer, VoiceClient, TextChannel, Member
 from discord.ext.commands import Context
 
 from bot.tts import TTSAlreadyProcessingException, TTSProcessException, Tts
@@ -33,6 +33,7 @@ class DBotSkills:
                              default_volume=self.default_volume)
         self.loop: AbstractEventLoop = loop
         self.tts = Tts()
+        self.user = None
 
     async def play_sound(self, sound_effect: SoundEffect, override=False):
         voice_client = self.guild.voice_client
@@ -129,6 +130,17 @@ class DBotSkills:
             self.loop.create_task(channel.send("Cannot process multiple TTS's at the same time"))
         except TTSProcessException as e:
             self.loop.create_task(channel.send("Something went wrong with the TTS process. {}".format(e)))
+
+    def roll(self, dice_size: int = 100):
+        results = list()
+        if self.guild.voice_client:
+            for member in self.guild.voice_client.channel.members:
+                if member != self.user:
+                    results.append({'name': member.display_name, 'result': random.randint(1, dice_size)})
+            results.sort(key=lambda x: x['result'], reverse=True)
+        else:
+            logger.info("Unable to find voice client")
+        return results
 
 
 class Player:
