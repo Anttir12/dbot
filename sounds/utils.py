@@ -1,6 +1,5 @@
 import json
 import os
-import shutil
 import subprocess
 import logging
 import sys
@@ -48,7 +47,7 @@ def create_modified_audio_in_memory_file(path: str, volume_modifier: Optional[fl
         name = basename(path)
     audio_bytes = modify_sound_file(path, volume_modifier=volume_modifier, start_ms=start_ms, end_ms=end_ms)
     size = sys.getsizeof(audio_bytes)
-    file = InMemoryUploadedFile(audio_bytes, "sound_effect", name, None, size, None)
+    file = InMemoryUploadedFile(audio_bytes, "file", name, None, size, None)
     return file
 
 
@@ -85,10 +84,10 @@ def modify_sound_file(path: str, volume_modifier: Optional[float] = None, start_
 
 def modify_sound_effect(sound_effect: SoundEffect, volume_modifier: Optional[float] = None,
                         start_ms: Optional[int] = None, end_ms: Optional[int] = None):
-    file = create_modified_audio_in_memory_file(sound_effect.sound_effect.path, volume_modifier=volume_modifier,
+    file = create_modified_audio_in_memory_file(sound_effect.file.path, volume_modifier=volume_modifier,
                                                 start_ms=start_ms, end_ms=end_ms, name=sound_effect.name)
-    sound_effect.sound_effect = file
-    sound_effect.save(update_fields=["sound_effect"])
+    sound_effect.file = file
+    sound_effect.save(update_fields=["file"])
 
 
 def get_stream(yt_url) -> CachedStream:
@@ -106,7 +105,7 @@ def get_stream(yt_url) -> CachedStream:
 def download_stream_and_cache_it(yt_url, yt_id) -> CachedStream:
     with youtube_dl.YoutubeDL() as ydl:
         info_dict = ydl.extract_info(yt_url, download=False)
-        video_title: str = info_dict.get('title', "title_now_found")
+        video_title: str = info_dict.get('title', "title_not_found")
         video_title = video_title.replace(" ", "_").replace("&", "_")
 
     source = '/tmp/streams/{}.mp3'.format(video_title)
@@ -128,8 +127,8 @@ def download_stream_and_cache_it(yt_url, yt_id) -> CachedStream:
         ytaudio.seek(0)
         mime_type = magic.from_buffer(ytaudio.read(1024), mime=True)
         ytaudio.seek(0)
-        file = InMemoryUploadedFile(ytaudio, "sound_effect", os.path.basename(source), mime_type, size, None)
-        cached_stream = CachedStream(title=video_title, yt_id=yt_id, file=file, size=size)
+        file = InMemoryUploadedFile(ytaudio, "file", os.path.basename(source), mime_type, size, None)
+        cached_stream = CachedStream(name=video_title, yt_id=yt_id, file=file, size=size)
         cached_stream.save(remove_oldest_if_full=True)
         os.remove(source)
     return cached_stream

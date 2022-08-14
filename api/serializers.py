@@ -7,7 +7,7 @@ from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError, APIException
 
-from bot.bot import bot
+from bot import dbot_skills
 from sounds import models, utils
 from sounds.utils import YtException
 
@@ -49,7 +49,7 @@ class SoundEffectFromYTSerializer(serializers.ModelSerializer):
         try:
             utils.get_yt_id_from_url(value)
         except YtException as yte:
-            raise ValidationError(str(yte))
+            raise ValidationError(str(yte)) from yte
         return value
 
     def validate(self, attrs):
@@ -74,11 +74,11 @@ class SoundEffectFromYTSerializer(serializers.ModelSerializer):
         if validated_data.get("start_ms") or validated_data.get("end_ms"):
             clip_data = utils.extract_clip_from_file(path, validated_data.get("start_ms"), validated_data.get("end_ms"))
             size = sys.getsizeof(clip_data)
-            file = InMemoryUploadedFile(clip_data, "sound_effect", validated_data["name"], None, size, None)
+            file = InMemoryUploadedFile(clip_data, "file", validated_data["name"], None, size, None)
         else:
             size = os.path.getsize(path)
             ytaudio = open(path, 'rb')
-            file = InMemoryUploadedFile(ytaudio, "sound_effect", ytaudio.name, None, size, None)
+            file = InMemoryUploadedFile(ytaudio, "file", ytaudio.name, None, size, None)
         user = self.context["request"].user
         instance = models.SoundEffect(name=validated_data["name"], sound_effect=file, created_by=user)
         if save:
@@ -169,7 +169,7 @@ class SoundEffectAudioPreviewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.SoundEffect
-        fields = ("sound_effect", "volume")
+        fields = ("file", "volume")
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -187,7 +187,7 @@ class PlayBotSoundSerializer(serializers.Serializer):
     def create(self, validated_data):
         user = self.context["request"].user
         sound_effect = models.SoundEffect.objects.get(id=validated_data["sound_effect_id"])
-        played = async_to_sync(bot.skills.play_sound)(sound_effect, override=validated_data["override"])
+        played = async_to_sync(dbot_skills.play_sound)(sound_effect, override=validated_data["override"])
         if played:
             models.SoundEffectPlayHistory.create_record(sound_effect=sound_effect, played_by=user)
         return {"bot": "ok"}
@@ -198,6 +198,26 @@ class PlayBotSoundSerializer(serializers.Serializer):
     def validate_sound_effect_id(self, value):
         if not models.SoundEffect.objects.filter(id=value).exists():
             raise serializers.ValidationError(f"SoundEffect with id {value} does not exist")
+        return value
+
+
+class PlayYtSerializer(serializers.Serializer):
+    yt_url = serializers.CharField(label="YT URL", max_length=200, required=True, write_only=True)
+    volume = serializers.FloatField(required=False, max_value=5.00, min_value=0.01, write_only=True)
+
+    def create(self, validated_data):
+        async_to_sync(dbot_skills.play_from_yt_url)(yt_url=validated_data["yt_url"],
+                                                    volume=validated_data.get("volume"))
+        return {"bot": "ok"}
+
+    def update(self, instance, validated_data):
+        raise NotImplementedError()
+
+    def validate_yt_url(self, value):
+        try:
+            utils.get_yt_id_from_url(value)
+        except YtException as yte:
+            raise ValidationError(str(yte)) from yte
         return value
 
 
@@ -213,8 +233,8 @@ class OwEventSerializer(serializers.ModelSerializer):
         fields = ("hero", "event", "team", "override", "bot")
 
     def create(self, validated_data):
-        async_to_sync(bot.skills.ow_event)(validated_data["hero"], validated_data["event"], validated_data["team"],
-                                           validated_data["override"])
+        async_to_sync(dbot_skills.ow_event)(validated_data["hero"], validated_data["event"], validated_data["team"],
+                                            validated_data["override"])
         return {"bot": "ok"}
 
     def validate_team(self, value):

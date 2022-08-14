@@ -58,14 +58,14 @@ class SoundEffectUpload(forms.ModelForm):
                 raise ValidationError("End time has to be bigger than start time")
             clip_data = utils.extract_clip_from_file(path, start_ms, end_ms)
             size = sys.getsizeof(clip_data)
-            file = InMemoryUploadedFile(clip_data, "sound_effect", name, None, size, None)
+            file = InMemoryUploadedFile(clip_data, "file", name, None, size, None)
         else:
             size = os.path.getsize(path)
             ytaudio = open(path, 'rb')
-            file = InMemoryUploadedFile(ytaudio, "sound_effect", ytaudio.name, None, size, None)
-        self.cleaned_data["sound_effect"] = file
+            file = InMemoryUploadedFile(ytaudio, "file", ytaudio.name, None, size, None)
+        self.cleaned_data["file"] = file
         self.files["sound_effect"] = file
-        self.instance.sound_effect = file
+        self.instance.file = file
         if not self.cleaned_data.get("categories"):
             self.cleaned_data["categories"] = [Category.objects.get(name="No category").id]
 

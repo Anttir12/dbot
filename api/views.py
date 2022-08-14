@@ -1,3 +1,4 @@
+from asgiref.sync import async_to_sync
 from django.db import transaction
 from django.db.models import Count, Q
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -13,7 +14,8 @@ from api import custom_permissions
 from api import api_utils
 from api.serializers import SoundEffectSerializer, FavouritesSerializer, SoundEffectFromYTSerializer, \
     PlayBotSoundSerializer, SoundEffectAudioSerializer, FavouritesMinimalSerializer, OwEventSerializer, \
-    CategorySerializer
+    CategorySerializer, PlayYtSerializer
+from bot import dbot_skills
 
 from sounds import models, utils
 
@@ -48,7 +50,7 @@ class CreateSoundEffectFromYt(CreateAPIView):
         serializer = self.serializer_class(data=request.query_params, context={"request": request})
         if serializer.is_valid(raise_exception=True):
             sound_effect = serializer.create_sound_effect(save=False)
-            preview_file = sound_effect.sound_effect.file.file
+            preview_file = sound_effect.file.file
             return HttpResponse(preview_file, content_type="audio/ogg")
         return HttpResponseBadRequest()
 
@@ -92,9 +94,9 @@ class SoundEffectAudio(UpdateAPIView):
         start_ms = serializer.validated_data.get("start_ms")
         end_ms = serializer.validated_data.get("end_ms")
         if vol or start_ms or end_ms:
-            file = utils.create_modified_audio_in_memory_file(sound_effect.sound_effect.path, vol, start_ms, end_ms)
+            file = utils.create_modified_audio_in_memory_file(sound_effect.file.path, vol, start_ms, end_ms)
         else:
-            file = sound_effect.sound_effect.file
+            file = sound_effect.file.file
         response = HttpResponse(file, content_type="audio/ogg")
         return response
 
@@ -176,6 +178,31 @@ class BotPlaySound(CreateAPIView):
     extra_permission = "sounds.can_play_sound_with_bot"
     permission_classes = [custom_permissions.HasExtraPermission]
     serializer_class = PlayBotSoundSerializer
+
+
+class BotPlayYt(CreateAPIView):
+    extra_permission = "sounds.can_play_yt"
+    permission_classes = [custom_permissions.HasExtraPermission]
+    serializer_class = PlayYtSerializer
+
+
+class DiscordEventGreetings(APIView):
+    extra_permission = "sounds.can_trigger_discord_event"
+    permission_classes = [custom_permissions.HasExtraPermission]
+
+    def post(self, request):
+        async_to_sync(dbot_skills.greetings_joining_voice)()
+        return Response(status=201, data={"bot": "ok"})
+
+
+class DiscordEventWelcome(APIView):
+    extra_permission = "sounds.can_trigger_discord_event"
+    permission_classes = [custom_permissions.HasExtraPermission]
+
+    def post(self, request):
+        user_id = request.data.get("user_id")
+        async_to_sync(dbot_skills.welcome_user_voice)(user_id)
+        return Response(status=201, data={"bot": "ok"})
 
 
 class OwEvent(CreateAPIView):

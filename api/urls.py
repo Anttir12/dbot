@@ -29,5 +29,8 @@ urlpatterns = [
     path('favourites/<int:pk>/sound_effects', views.FavouritesSoundEffects.as_view(), name="favourites_sound_effects"),
 
     path('bot/play_sound', views.BotPlaySound.as_view(), name="play_sound"),
+    path('bot/discord_event/welcome', views.DiscordEventWelcome.as_view(), name="discord_event_welcome"),
+    path('bot/discord_event/greetings', views.DiscordEventGreetings.as_view(), name="discord_event_greetings"),
+    path('bot/play_yt', views.BotPlayYt.as_view(), name="play_yt"),
     path('bot/ow_event', views.OwEvent.as_view(), name="ow_event"),
 ]

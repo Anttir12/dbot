@@ -30,7 +30,7 @@ class SoundEffectForm(forms.ModelForm):
 
     class Meta:
         model = SoundEffect
-        fields = ("name", "sound_effect", "categories")
+        fields = ("name", "file", "categories")
 
 
 class SoundEffectAdmin(admin.ModelAdmin):
@@ -42,7 +42,7 @@ class SoundEffectAdmin(admin.ModelAdmin):
     list_filter = ("categories",)
 
     def duration(self, obj):
-        return "{}ms".format(utils.get_duration_of_audio_file(obj.sound_effect.path))
+        return "{}ms".format(utils.get_duration_of_audio_file(obj.file.path))
 
     def save_model(self, request, obj: SoundEffect, form, change):
         super().save_model(request, obj, form, change)

@@ -24,13 +24,13 @@ class FavouritesTest(DbotApiTest):
         path = os.path.join(settings.TEST_DATA, "nerd.ogg")
         with open(path, "rb") as audio:
             size = os.path.getsize(path)
-            file = InMemoryUploadedFile(audio, "sound_effect", audio.name, None, size, None)
+            file = InMemoryUploadedFile(audio, "file", audio.name, None, size, None)
             now = timezone.now()
             self.created_at_drf = serializers.DateTimeField().to_representation(now)
             with libfaketime.fake_time(now):
-                self.se1 = SoundEffect.objects.create(name="sound_effect_1", sound_effect=file, created_by=self.user1)
-                self.se2 = SoundEffect.objects.create(name="sound_effect_2", sound_effect=file, created_by=self.user1)
-                self.se3 = SoundEffect.objects.create(name="sound_effect_3", sound_effect=file, created_by=self.user1)
+                self.se1 = SoundEffect.objects.create(name="sound_effect_1", file=file, created_by=self.user1)
+                self.se2 = SoundEffect.objects.create(name="sound_effect_2", file=file, created_by=self.user1)
+                self.se3 = SoundEffect.objects.create(name="sound_effect_3", file=file, created_by=self.user1)
 
     def test_get_all_favourites(self):
         favs1 = Favourites.objects.create(name="favs1", owner=self.user1)
