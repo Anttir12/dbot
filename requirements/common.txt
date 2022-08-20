@@ -1,6 +1,5 @@
 python-dotenv==0.20.0
 django==3.2.15
-discord.py[voice]==1.7.3
 djangorestframework==3.13.1
 djangorestframework-simplejwt==5.2.0
 drf-spectacular==0.23.1

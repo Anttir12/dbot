@@ -2,7 +2,7 @@ version: "3.3"
 
 services:
   dbot-web:
-    image: dbot:latest
+    image: dbot-web:latest
     command: daphne -u /tmp/daphne.sock dbot.asgi:application
     restart: unless-stopped
     env_file:
@@ -15,6 +15,15 @@ services:
     volumes:
       - ~/dbot_data/uploads:/app/uploads
       - /tmp:/tmp
+
+  jsdbot:
+    image: jsdbot:latest
+    command: node dist/index.js
+    restart: unless-stopped
+    env_file:
+      - dbot/jsdbot.env
+    depends_on:
+      - redis
 
   redis:
     image: redis

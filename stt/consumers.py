@@ -13,6 +13,7 @@ from asgiref.sync import async_to_sync
 from azure.cognitiveservices.speech import ProfanityOption, SpeechRecognitionEventArgs, OutputFormat
 from azure.cognitiveservices.speech.audio import PushAudioInputStream
 from channels.generic.websocket import WebsocketConsumer
+from django.conf import settings
 
 from bot import dbot_skills
 from sounds import models as sound_models
@@ -180,7 +181,7 @@ class SttAnalyzer:
     def azure(self, process: subprocess.Popen):
         """gives an example how to use a push audio stream to recognize speech from a custom audio
         source"""
-        speech_config = speechsdk.SpeechConfig(subscription="1280443192704611978eb5b00719db22", region="northeurope")
+        speech_config = speechsdk.SpeechConfig(subscription=settings.AZURE_KEY, region="northeurope")
         speech_config.speech_recognition_language = "fi-FI"
         speech_config.set_profanity(ProfanityOption.Raw)
         speech_config.output_format = OutputFormat.Detailed

@@ -6,13 +6,14 @@ import redis
 
 from asgiref.sync import sync_to_async
 from django.utils import timezone
+from django.conf import settings
 
 from sounds import utils, models
 
 logger = logging.getLogger(__name__)
 
 
-r = redis.StrictRedis(host="localhost", port=6379, db=7, decode_responses=True)
+r = redis.StrictRedis.from_url(settings.BOT_REDIS_URL, decode_responses=True)
 SOUND_QUEUE = "SOUND_QUEUE"
 DEFAULT_VOLUME = "DEFAULT_VOLUME"
 MAX_QUEUE_LENGTH = 5
