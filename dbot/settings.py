@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'sounds.apps.SoundsConfig',
     'bot.apps.BotConfig',
+    'stt.apps.SttConfig',
     'crispy_forms',
     'django_extensions',
     'django_cleanup.apps.CleanupConfig',
@@ -72,6 +73,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_spectacular',
     'constance',
+    'channels'
 ]
 
 MIDDLEWARE = [
@@ -105,7 +107,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'dbot.wsgi.application'
-
+ASGI_APPLICATION = 'dbot.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
