@@ -14,6 +14,10 @@ from azure.cognitiveservices.speech import ProfanityOption, SpeechRecognitionEve
 from azure.cognitiveservices.speech.audio import PushAudioInputStream
 from django.conf import settings
 
+from bot import dbot_skills
+from sounds import models as sound_models
+from stt import models
+
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +27,6 @@ CHUNK_SIZE = 4000
 
 
 class AnyPhrase:
-    from bot import dbot_skills
-    from sounds import models as sound_models
-    from stt import models
 
     def __init__(self, reaction_model: models.SttReaction):
         if not (any_phrases := reaction_model.data.get("any_phrase")):

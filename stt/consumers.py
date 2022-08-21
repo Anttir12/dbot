@@ -23,7 +23,6 @@ class SpeechConsumer(WebsocketConsumer):
         # Having this import at the top causes problems during deployment. Apparently it tries to access settings
         # before settings is ready
         from stt.SpeechAnalyzer import SttAnalyzer
-
         logger.info("Connection accepted!")
         self.stt = SttAnalyzer()
         self.input_reader = threading.Thread(target=self.stt.input_reader)

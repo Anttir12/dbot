@@ -1,4 +1,8 @@
+import uuid
+
+import redis
 from asgiref.sync import async_to_sync
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Count, Q
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -6,7 +10,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import permissions
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404, ListAPIView, ListCreateAPIView, RetrieveAPIView, CreateAPIView, \
-    UpdateAPIView
+    UpdateAPIView, GenericAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -18,6 +22,18 @@ from api.serializers import SoundEffectSerializer, FavouritesSerializer, SoundEf
 from bot import dbot_skills
 
 from sounds import models, utils
+
+
+r = redis.StrictRedis.from_url(settings.BOT_REDIS_URL, decode_responses=True)
+
+
+class WebsocketTokenView(GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        token = str(uuid.uuid4())
+        r.set(f"ws_token_{token}", 1, ex=30)
+        return Response(status=201, data={"token": token})
 
 
 class SoundEffectList(ListAPIView):

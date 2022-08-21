@@ -14,6 +14,8 @@ urlpatterns = [
     path('token', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
 
+    path('token/ws', views.WebsocketTokenView.as_view(), name='websocket_token'),
+
     path('sound_effects', views.SoundEffectList.as_view(), name="sound_effects"),
     path('sound_effects/<int:pk>', views.SoundEffectDetail.as_view(), name="sound_effect"),
     path('sound_effects/<int:pk>/audio', views.SoundEffectAudio.as_view(), name="sound_effect_audio"),

@@ -203,7 +203,7 @@ class PlayBotSoundSerializer(serializers.Serializer):
 
 class PlayYtSerializer(serializers.Serializer):
     yt_url = serializers.CharField(label="YT URL", max_length=200, required=True, write_only=True)
-    volume = serializers.FloatField(required=False, max_value=5.00, min_value=0.01, write_only=True)
+    volume = serializers.FloatField(required=False, max_value=5.00, min_value=0.01, write_only=True, allow_null=True)
 
     def create(self, validated_data):
         async_to_sync(dbot_skills.play_from_yt_url)(yt_url=validated_data["yt_url"],

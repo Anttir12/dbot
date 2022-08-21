@@ -24,6 +24,8 @@ services:
       - dbot/jsdbot.env
     depends_on:
       - redis
+    volumes:
+      - ~/dbot_data/uploads:/app/uploads
 
   redis:
     image: redis
