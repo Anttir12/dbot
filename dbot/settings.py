@@ -108,7 +108,6 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'dbot.wsgi.application'
 ASGI_APPLICATION = 'dbot.asgi.application'
 
 # Database
