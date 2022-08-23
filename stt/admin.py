@@ -10,7 +10,8 @@ from sounds import models as sound_models
 class SttReactionForm(forms.ModelForm):
 
     sound_effects = forms.ModelMultipleChoiceField(queryset=sound_models.SoundEffect.objects.all(),
-                                                   widget=FilteredSelectMultiple("Sounds", is_stacked=False))
+                                                   widget=FilteredSelectMultiple("Sounds", is_stacked=False),
+                                                   required=True)
 
     class Meta:
         model = SttReaction
