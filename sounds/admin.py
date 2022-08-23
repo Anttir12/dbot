@@ -1,3 +1,5 @@
+import redis
+from django.conf import settings
 from django.contrib import admin
 
 from django import forms
@@ -59,13 +61,25 @@ class SoundEffectPlayHistoryAdmin(admin.ModelAdmin):
     readonly_fields = ("sound_effect", "played_by", "played_at")
 
 
+class DiscordUserAdmin(admin.ModelAdmin):
+    actions = ["make_bot_aware"]
+
+    @admin.action(description="Push the data to redis so Bot knows what's up")
+    def make_bot_aware(self, request, queryset):
+        r = redis.StrictRedis.from_url(settings.BOT_REDIS_URL, decode_responses=True)
+        r.delete("AUTO_JOIN_USERS")
+        auto_join_users = [duser.user_id for duser in DiscordUser.objects.filter(auto_join=True)]
+        if auto_join_users:
+            r.sadd("AUTO_JOIN_USERS", *auto_join_users)
+
+
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(SoundEffect, SoundEffectAdmin)
 admin.site.register(SoundEffectGif)
 admin.site.register(AlternativeName)
 admin.site.register(CachedStream)
 admin.site.register(Favourites)
-admin.site.register(DiscordUser)
+admin.site.register(DiscordUser, DiscordUserAdmin)
 admin.site.register(EventTriggeredSoundEffect)
 admin.site.register(OwEventSoundEffect)
 admin.site.register(SoundEffectPlayHistory, SoundEffectPlayHistoryAdmin)
