@@ -55,6 +55,7 @@ DEBUG = env("DEBUG")
 
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
+CSRF_TRUSTED_ORIGINS = ['https://*.devduck.fi']
 
 # Application definition
 INSTALLED_APPS = [
