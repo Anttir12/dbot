@@ -58,9 +58,6 @@ async def greetings_joining_voice():
                                              .select_related("sound_effect"))
     if event_sounds:
         event = random.choice(event_sounds)
-        for _ in range(5):
-            await asyncio.sleep(0.5)
-
         play_only_if_not_playing(event.sound_effect)
 
 

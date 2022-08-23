@@ -1,5 +1,5 @@
 python-dotenv==0.20.0
-django==3.2.15
+django==4.1
 djangorestframework==3.13.1
 djangorestframework-simplejwt==5.2.0
 drf-spectacular==0.23.1
