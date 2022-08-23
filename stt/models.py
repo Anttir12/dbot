@@ -22,3 +22,5 @@ class SttReaction(models.Model):
     data = models.JSONField(help_text="Format of this depends on the ReactionType", default={"any_phrase": []})
     sound_effects = models.ManyToManyField(sound_models.SoundEffect)
 
+    def __str__(self):
+        return f"{self.name} {'(inactive)' if not self.active else ''}"
