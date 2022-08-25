@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>STT Feed</title>
+</head>
+<body>
+    <textarea id="stt-feed" cols="100" rows="20"></textarea><br>
+    {{ stt_token|json_script:"stt-token" }}
+    <script>
+        const sttToken = JSON.parse(document.getElementById('stt-token').textContent);
+
+        const sttSocket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/ws/stt/feed/'
+            + sttToken
+            + '/'
+        );
+
+        sttSocket.onmessage = function(e) {
+            console.log(e)
+
+            const data = JSON.parse(e.data);
+            document.querySelector('#stt-feed').value += (`${data.type} - ${data.text} \n`);
+        };
+
+        sttSocket.onclose = function(e) {
+            console.error('Stt feed closed unexpectedly');
+        };
+
+    </script>
+</body>
+</html>

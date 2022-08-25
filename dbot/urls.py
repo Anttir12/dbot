@@ -26,4 +26,5 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name="logout"),
     path('', include("sounds.urls")),
     path('api/v1/', include("api.urls")),
+    path('stt/', include("stt.urls")),
 ]

@@ -65,7 +65,7 @@ class DiscordUserAdmin(admin.ModelAdmin):
     actions = ["make_bot_aware"]
 
     @admin.action(description="Push the data to redis so Bot knows what's up")
-    def make_bot_aware(self, request, queryset):
+    def make_bot_aware(self, _request, _queryset):
         r = redis.StrictRedis.from_url(settings.BOT_REDIS_URL, decode_responses=True)
         r.delete("AUTO_JOIN_USERS")
         auto_join_users = [duser.user_id for duser in DiscordUser.objects.filter(auto_join=True)]

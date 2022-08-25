@@ -50,14 +50,18 @@ class AnyPhrase:
 
 class SttAnalyzer:
 
-    def __init__(self):
+    def __init__(self, channel_layer=None, token: str = None):
         self.input_data: Optional[bytes] = None
         self.last_read = None
         self.empty_frames = 0
         self.end = False
         self.stream = Queue()
-        reaction_models  = list(models.SttReaction.objects.filter(active=True))
+        reaction_models = list(models.SttReaction.objects.filter(active=True))
         self.reactions: Collection[AnyPhrase] = self._unpack_reaction_models(reaction_models)
+        self.channel_layer = channel_layer
+        self.token = token
+        if self.channel_layer and not self.token:
+            raise ValueError("Token required with channel layer")
 
     def _unpack_reaction_models(self, reaction_models: Collection[models.SttReaction]):
         reactions = []
@@ -99,10 +103,6 @@ class SttAnalyzer:
                         (self.last_read and self.empty_frames > 0 and now - self.last_read > 0.125)):
                     self.empty_frames += 1
                     self.last_read = time.time()
-                    # logger.info(f"{datetime.datetime.now()}  Nothingness!!!")
-                    # logger.info(f"Now: {now}  last read: {self.last_read}  empty frames: {self.empty_frames}")
-                    # sys.stdout.flush()
-                    # fill with empty data
                     frame = BLANK_FRAME
 
             if frame:
@@ -176,9 +176,15 @@ class SttAnalyzer:
 
         def recognizing(evt: SpeechRecognitionEventArgs):
             analyse(evt)
+            if self.channel_layer:
+                async_to_sync(self.channel_layer.group_send)(self.token, {'type': 'recognizing',
+                                                                          'text': evt.result.text})
 
         def recognized(evt: SpeechRecognitionEventArgs):
             analyse(evt)
+            if self.channel_layer:
+                async_to_sync(self.channel_layer.group_send)(self.token, {'type': 'recognized',
+                                                                          'text': evt.result.text})
 
         def analyse(evt: SpeechRecognitionEventArgs):
             tokenized_text = self.split_into_phrases(evt.result.text)
