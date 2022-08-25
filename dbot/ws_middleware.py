@@ -1,7 +1,21 @@
+from urllib import parse
 import redis
+from channels.auth import AuthMiddlewareStack
 from channels.security.websocket import WebsocketDenier
 from django.conf import settings
-from urllib import parse
+
+
+
+class MultiPathMiddleware:
+
+    def __init__(self, app):
+        self.auth_app = AuthMiddlewareStack(app)
+        self.token_app = TokenQueryParameterMiddleware(app)
+
+    async def __call__(self, scope, receive, send):
+        if scope["path"].startswith("/ws/bot"):
+            return await self.token_app(scope, receive, send)
+        return await self.auth_app(scope, receive, send)
 
 
 class TokenQueryParameterMiddleware:
@@ -15,9 +29,7 @@ class TokenQueryParameterMiddleware:
 
         if r.get(f"ws_token_{token}"):
             return await self.app(scope, receive, send)
-        else:
-            # Deny the connection
-            denier = WebsocketDenier()
-            return await denier(scope, receive, send)
 
-
+        # Deny the connection
+        denier = WebsocketDenier()
+        return await denier(scope, receive, send)

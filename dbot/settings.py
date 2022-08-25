@@ -40,7 +40,9 @@ env = environ.Env(
     MAX_CACHED_STREAMS=(int, 3),
     FFMPEG_PATH=(str, "ffmpeg"),
     FFPROBE_PATH=(str, "ffprobe"),
-    AZURE_KEY=(str, "")
+    AZURE_KEY=(str, ""),
+    CHANNELS_REDIS_IP=(str, "localhost"),
+    CHANNELS_REDIS_PORT=(int, "6379"),
 )
 environ.Env.read_env()
 
@@ -110,6 +112,15 @@ TEMPLATES = [
 ]
 
 ASGI_APPLICATION = 'dbot.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [(env("CHANNELS_REDIS_IP"), env("CHANNELS_REDIS_PORT"))],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
