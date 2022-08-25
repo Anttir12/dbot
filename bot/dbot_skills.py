@@ -1,211 +1,124 @@
 import asyncio
-import collections
+import json
 import logging
 import random
-import threading
-from asyncio import AbstractEventLoop
-from time import sleep
-from typing import Optional
+import redis
 
 from asgiref.sync import sync_to_async
-from constance import config
-from discord import FFmpegPCMAudio, Guild, PCMVolumeTransformer, VoiceClient, TextChannel, Member
-from discord.ext.commands import Context
+from django.utils import timezone
+from django.conf import settings
 
-from bot.tts import TTSAlreadyProcessingException, TTSProcessException, Tts
 from sounds import utils, models
-from sounds.models import SoundEffect, EventTriggeredSoundEffect, OwEventSoundEffect
 
 logger = logging.getLogger(__name__)
+
+
+r = redis.StrictRedis.from_url(settings.BOT_REDIS_URL, decode_responses=True)
+SOUND_QUEUE = "SOUND_QUEUE"
+DEFAULT_VOLUME = "DEFAULT_VOLUME"
+MAX_QUEUE_LENGTH = 5
+BOT_STATUS = "BOT_STATUS"
+SOUND_OVERRIDE = "SOUND_OVERRIDE"
 
 
 class SkillException(Exception):
     pass
 
 
-class DBotSkills:
+async def play_sound(sound_effect: models.SoundEffect, override=False):
+    if override:
+        return play_sound_now(sound_effect)
 
-    def __init__(self, loop: AbstractEventLoop):
-        self.guild: Optional[Guild] = None
-        self.channel = None
-        self.default_volume = 0.8
-        self.player = Player(voice_client=self.guild.voice_client if self.guild else None,
-                             default_volume=self.default_volume)
-        self.loop: AbstractEventLoop = loop
-        self.tts = Tts()
-        self.user = None
+    added_to_queue = add_to_queue_and_play(sound_effect)
+    return added_to_queue
 
-    async def play_sound(self, sound_effect: SoundEffect, override=False):
-        voice_client = self.guild.voice_client
-        if not voice_client:
-            logger.info("Voice client not found!")
-            return False
-        self.player.voice_client = self.guild.voice_client
+
+async def play_from_yt_url(yt_url: str, volume=None):
+    cached_stream: models.CachedStream = await sync_to_async(utils.get_stream)(yt_url)
+    if cached_stream:
+        return add_to_queue_and_play(cached_stream, volume)
+
+    logger.info("Could not find stream")
+    raise SkillException("Unable to find stream")
+
+
+async def welcome_user_voice(user_id: str):
+    event_sounds = await sync_to_async(list)(models.EventTriggeredSoundEffect.objects.filter(
+        event=models.WELCOME, discord_user__user_id=user_id).select_related("sound_effect"))
+    if not event_sounds:
+        event_sounds = await sync_to_async(list)(models.EventTriggeredSoundEffect.objects.filter(
+            event=models.WELCOME, discord_user__isnull=True).select_related("sound_effect"))
+    if event_sounds:
+        event = random.choice(event_sounds)
+        play_only_if_not_playing(event.sound_effect)
+
+
+async def greetings_joining_voice():
+    event_sounds = await sync_to_async(list)(models.EventTriggeredSoundEffect.objects.filter(event=models.GREETINGS)
+                                             .select_related("sound_effect"))
+    if event_sounds:
+        event = random.choice(event_sounds)
+        play_only_if_not_playing(event.sound_effect)
+
+
+async def ow_event(hero: models.OwEventSoundEffect.Hero, event: models.OwEventSoundEffect.Event,
+                   team: models.OwEventSoundEffect.Team, override: bool = True):
+
+    ow_events = await sync_to_async(list)(models.OwEventSoundEffect.objects.filter(
+        hero=hero, event=event, team=team).select_related("sound_effect"))
+    if not ow_events:
+        ow_events = await sync_to_async(list)(models.OwEventSoundEffect.objects.filter(
+            event=event, team=team).select_related("sound_effect"))
+    if ow_events:
+        event = random.choice(ow_events)
+        logger.info(f"Playing {event.file} which was triggered by ow_event {event} {team} {hero}")
         if override:
-            return self.player.play_sound_now(sound_effect.sound_effect.path)
-
-        added_to_queue = self.player.add_to_queue_and_play(sound_effect.sound_effect.path)
-        return added_to_queue
-
-    async def play_from_yt_url(self, yt_url: str, volume=None):
-        cached_stream = await sync_to_async(utils.get_stream)(yt_url)
-        if cached_stream:
-            source = cached_stream.file.path
-            if self.guild.voice_client:
-                if self.channel:
-                    self.channel.send("Now playing {}".format(cached_stream.title))
-                self.player.add_to_queue_and_play(source, volume)
-            else:
-                logger.info("Unable to find voice client")
+            play_sound_now(event.sound_effect)
         else:
-            logger.info("Could not find stream")
-            if self.channel:
-                await self.channel.send("I was unable to find a proper stream. Sorry!")
-
-    async def set_channel(self, ctx: Context):
-        cid = ctx.message.channel.id
-        self.channel = ctx.message.channel
-        await ctx.message.channel.send(f"Channel ID: {cid}")
-
-    async def welcome_user_voice(self, member):
-        voice_client = self.guild.voice_client
-        if voice_client:
-            event_sounds = await sync_to_async(list)(EventTriggeredSoundEffect.objects.filter(
-                event=models.WELCOME, discord_user__mention=member.mention).select_related("sound_effect"))
-            if not event_sounds:
-                event_sounds = await sync_to_async(list)(EventTriggeredSoundEffect.objects.filter(
-                    event=models.WELCOME, discord_user__isnull=True).select_related("sound_effect"))
-            if event_sounds:
-                event = random.choice(event_sounds)
-                self.player.voice_client = self.guild.voice_client
-                self.player.play_only_if_not_playing(event.sound_effect.sound_effect.path)
-
-    async def greetings_joining_voice(self):
-        event_sounds = await sync_to_async(list)(EventTriggeredSoundEffect.objects.filter(event=models.GREETINGS)
-                                                 .select_related("sound_effect"))
-        if event_sounds:
-            event = random.choice(event_sounds)
-            for _ in range(5):
-                voice_client: VoiceClient = self.guild.voice_client
-                if voice_client and voice_client.is_connected():
-                    break
-                await asyncio.sleep(0.5)
-            self.player.voice_client = self.guild.voice_client
-            self.player.play_only_if_not_playing(event.sound_effect.sound_effect.path)
-
-    async def ow_event(self, hero: OwEventSoundEffect.Hero, event: OwEventSoundEffect.Event,
-                       team: OwEventSoundEffect.Team, override: bool = True):
-        voice_client = self.guild.voice_client
-        if voice_client:
-            ow_events = await sync_to_async(list)(OwEventSoundEffect.objects.filter(
-                hero=hero, event=event, team=team).select_related("sound_effect"))
-            if not ow_events:
-                ow_events = await sync_to_async(list)(OwEventSoundEffect.objects.filter(
-                    event=event, team=team).select_related("sound_effect"))
-            if ow_events:
-                event = random.choice(ow_events)
-                logger.info(f"Playing {event.sound_effect} which was triggered by ow_event {event} {team} {hero}")
-                self.player.voice_client = self.guild.voice_client
-                if override:
-                    self.player.play_sound_now(event.sound_effect.sound_effect.path)
-                else:
-                    self.player.play_only_if_not_playing(event.sound_effect.sound_effect.path)
-            else:
-                logger.info(f"No action set for event {event} {team}")
-        else:
-            logger.info("Triggered event when no voice available")
-
-    def reinitialise_player(self):
-        self.player = Player(voice_client=self.guild.voice_client if self.guild else None)
-
-    def set_volume(self, volume):
-        self.default_volume = volume
-        self.player.volume = volume
-
-    def speak(self, channel: TextChannel, tts, volume: Optional[float]):
-        try:
-            temp_file = self.tts.synthesize_speech(tts)
-            self.player.play_sound_now(temp_file, volume)
-        except TTSAlreadyProcessingException:
-            self.loop.create_task(channel.send("Cannot process multiple TTS's at the same time"))
-        except TTSProcessException as e:
-            self.loop.create_task(channel.send("Something went wrong with the TTS process. {}".format(e)))
-
-    def roll(self, dice_size: int = 100):
-        results = list()
-        if self.guild.voice_client:
-            for member in self.guild.voice_client.channel.members:
-                if member != self.user:
-                    results.append({'name': member.display_name, 'result': random.randint(1, dice_size)})
-            results.sort(key=lambda x: x['result'], reverse=True)
-        else:
-            logger.info("Unable to find voice client")
-        return results
+            play_only_if_not_playing(event.sound_effect)
+    else:
+        logger.info(f"No action set for event {event} {team}")
 
 
-class Player:
+def add_to_queue_and_play(sound: models.Playable, volume=None):
+    added_to_queue = add_sound_to_queue(sound, volume)
+    return added_to_queue
 
-    def __init__(self, voice_client, default_volume=1.0):
-        self.sound_queue_play_lock = threading.Lock()
-        self.sound_deque = collections.deque(maxlen=config.MAX_QUEUE_SIZE)
-        self.voice_client: VoiceClient = voice_client
-        self.volume = default_volume
 
-    def add_to_queue_and_play(self, path, volume=None):
-        added_to_queue = self.add_sound_to_queue(path, volume)
-        self.play_queue()
-        return added_to_queue
+def add_sound_to_queue(sound: models.Playable, volume=None):
+    if not volume:
+        volume = r.get(DEFAULT_VOLUME)
 
-    def add_sound_to_queue(self, path, volume=None):
-        if not volume:
-            volume = self.volume
-        if len(self.sound_deque) < self.sound_deque.maxlen:
-            self.sound_deque.append((path, volume))
-            return True
-
-        logger.info("Queue full")
-        return False
-
-    def play_sound_now(self, path, volume=None):
-        if not volume:
-            volume = self.volume
-        if self.voice_client.is_playing():
-            self.voice_client.stop()
-        self.sound_deque.appendleft((path, volume))
-        return self.play_queue()
-
-    def play_only_if_not_playing(self, path, volume=None):
-        if self.voice_client.is_playing():
-            return False
-        return self.play_sound_now(path, volume)
-
-    def play_queue(self):
-        if self.sound_queue_play_lock.acquire(blocking=True, timeout=0.1):
-
-            def play():
-                try:
-                    while self.sound_deque:
-                        if not self.voice_client:
-                            logger.warning("Trying to play sound_queue without voice client. "
-                                           "Clearing sound queue and returning...")
-                            self.clear_queue()
-                            break
-
-                        source, volume = self.sound_deque.popleft()
-                        path = source.name if hasattr(source, "name") else source
-                        volume = 2 if volume > 2 else volume  # Make sure volume can't be over 2 to preserve hearing
-                        audio = PCMVolumeTransformer(FFmpegPCMAudio(path), volume)
-                        self.voice_client.play(audio)
-                        while self.voice_client.is_playing() or self.voice_client.is_paused():
-                            sleep(0.05)
-                finally:
-                    self.sound_queue_play_lock.release()
-
-            t = threading.Thread(target=play)
-            t.start()
-        else:
-            return False
+    queue_length = r.llen(SOUND_QUEUE)
+    if queue_length < MAX_QUEUE_LENGTH:
+        sound_json = _create_sound_json(sound, volume)
+        r.rpush(SOUND_QUEUE, sound_json)
         return True
 
-    def clear_queue(self):
-        self.sound_deque.clear()
+    logger.info("Queue full")
+    return False
+
+
+def play_sound_now(sound: models.Playable, volume=None):
+    sound_json = _create_sound_json(sound, volume)
+    r.set(SOUND_OVERRIDE, sound_json)
+
+
+def play_only_if_not_playing(sound: models.Playable, volume=None):
+    if r.get(BOT_STATUS) == "idle" and r.llen(SOUND_QUEUE) == 0:
+        return add_sound_to_queue(sound, volume)
+
+    return False
+
+
+def clear_queue():
+    r.delete(SOUND_QUEUE)
+
+
+def _create_sound_json(sound: models.Playable, volume):
+    return json.dumps({
+            "path": sound.file.path,
+            "name": sound.name,
+            "volume": volume,
+            "timestamp": timezone.now().isoformat()
+        })

@@ -40,7 +40,7 @@ class Sounds(LoginRequiredMixin, View):
         form = SoundEffectUpload(request.POST, request.FILES)
         if form.is_valid():
             if "preview" in request.POST:
-                preview_file = form.instance.sound_effect.file.file
+                preview_file = form.instance.file.file.file
                 return HttpResponse(preview_file, content_type="audio/ogg")
             form.save()
             form = SoundEffectUpload()

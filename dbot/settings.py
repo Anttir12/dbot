@@ -32,6 +32,7 @@ env = environ.Env(
     DATABASE_HOST=(str, '127.0.0.1'),
     DATABASE_PORT=(int, 5432),
     CONSTANCE_REDIS_URL=(str, 'redis://localhost:6379/8'),
+    BOT_REDIS_URL=(str, 'redis://localhost:6379/7'),
     STATIC_ROOT=(str, os.path.join(BASE_DIR, 'static/')),
     COMMAND_PREFIX=(str, "!"),
     DISCORD_TOKEN=(str, ""),
@@ -39,6 +40,7 @@ env = environ.Env(
     MAX_CACHED_STREAMS=(int, 3),
     FFMPEG_PATH=(str, "ffmpeg"),
     FFPROBE_PATH=(str, "ffprobe"),
+    AZURE_KEY=(str, "")
 )
 environ.Env.read_env()
 
@@ -53,6 +55,7 @@ DEBUG = env("DEBUG")
 
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
+CSRF_TRUSTED_ORIGINS = ['https://*.devduck.fi']
 
 # Application definition
 INSTALLED_APPS = [
@@ -64,6 +67,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'sounds.apps.SoundsConfig',
     'bot.apps.BotConfig',
+    'stt.apps.SttConfig',
     'crispy_forms',
     'django_extensions',
     'django_cleanup.apps.CleanupConfig',
@@ -72,6 +76,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_spectacular',
     'constance',
+    'channels'
 ]
 
 MIDDLEWARE = [
@@ -104,8 +109,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'dbot.wsgi.application'
-
+ASGI_APPLICATION = 'dbot.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
@@ -232,3 +236,7 @@ CONSTANCE_CONFIG = {
     "SOUNDS_ONLY_FROM_CHANNEL": (False, "Sound effects can only be triggered by users from the "
                                         "same channel as bot (NYI)"),
 }
+
+AZURE_KEY = env("AZURE_KEY")
+
+BOT_REDIS_URL = env("BOT_REDIS_URL")

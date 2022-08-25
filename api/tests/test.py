@@ -11,7 +11,7 @@ class DbotApiTest(APITestCase):
     def tearDown(self):
         for s in SoundEffect.objects.all():
             try:
-                os.remove(s.sound_effect.path)
+                os.remove(s.file.path)
             except OSError:
                 pass
 

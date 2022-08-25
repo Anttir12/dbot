@@ -21,6 +21,14 @@ def validate_sound_effect_name(name):
         raise ValidationError(f"{name} must not exist in AlternativeNames")
 
 
+class Playable(models.Model):
+    class Meta:
+        abstract = True
+
+    name = models.CharField(max_length=200)
+    file = models.FileField(null=False)
+
+
 class Category(models.Model):
     name = models.CharField(max_length=128, unique=True, null=False)
     color_code = ColorField(null=False)
@@ -30,19 +38,20 @@ class Category(models.Model):
         return str(self.name)
 
 
-class SoundEffect(models.Model):
+class SoundEffect(Playable):
 
     class Meta:
         permissions = [
             ("can_play_sound_with_bot", "Can command bot to play sound"),
             ("can_download_sound", "Can download sound"),
             ("can_upload_clip_from_yt", "Can upload clip from YouTube"),
+            ("can_play_yt", "Can play sounds directly from yt")
         ]
 
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     last_edited = models.DateTimeField(auto_now=True)
-    sound_effect = models.FileField(null=False, blank=False, upload_to="uploads/soundeffects/")
+    file = models.FileField(null=False, blank=False, upload_to="uploads/soundeffects/")
     name = models.CharField(null=False, blank=False, max_length=200, unique=True,
                             validators=[validate_sound_effect_name])
     categories = models.ManyToManyField(Category, blank=True, related_name="sound_effects")
@@ -64,9 +73,9 @@ class AlternativeName(models.Model):
     name = models.CharField(max_length=200, unique=True, validators=[validate_alternative_name])
 
 
-class CachedStream(models.Model):
+class CachedStream(Playable):
     yt_id = models.CharField(max_length=30, unique=True)
-    title = models.CharField(max_length=200, null=True)
+    name = models.CharField(max_length=200, null=True)
     file = models.FileField(null=False, upload_to="uploads/cache/")
     size = models.IntegerField()  # Not yet used but probably useful for better control of the cache size
 
@@ -81,7 +90,7 @@ class CachedStream(models.Model):
             super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.title} ({self.file.path})"
+        return f"{self.name} ({self.file.path})"
 
 
 class Favourites(models.Model):
@@ -102,12 +111,12 @@ class Favourites(models.Model):
 
 class DiscordUser(models.Model):
     display_name = models.CharField(max_length=255, null=False, blank=False)
-    mention = models.CharField(max_length=255, null=False, blank=False, unique=True)
+    user_id = models.CharField(max_length=255, null=False, blank=False, unique=True)
     added_by = models.ForeignKey(User, related_name="added_discord_users", on_delete=models.SET_NULL, null=True)
     auto_join = models.BooleanField(default=False)
 
     def __str__(self):
-        return "{} ({})".format(self.display_name, self.mention)
+        return "{} ({})".format(self.display_name, self.user_id)
 
 
 WELCOME = "welcome"
@@ -118,6 +127,9 @@ EVENT_TYPES = ((WELCOME, "Welcome"),
 
 
 class EventTriggeredSoundEffect(models.Model):
+
+    class Meta:
+        permissions = [("can_trigger_discord_event", "Can trigger discord events")]
 
     event = models.CharField(choices=EVENT_TYPES, max_length=255, null=False)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
