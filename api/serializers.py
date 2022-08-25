@@ -80,7 +80,7 @@ class SoundEffectFromYTSerializer(serializers.ModelSerializer):
             ytaudio = open(path, 'rb')
             file = InMemoryUploadedFile(ytaudio, "file", ytaudio.name, None, size, None)
         user = self.context["request"].user
-        instance = models.SoundEffect(name=validated_data["name"], sound_effect=file, created_by=user)
+        instance = models.SoundEffect(name=validated_data["name"], file=file, created_by=user)
         if save:
             with transaction.atomic():
                 instance.save()
