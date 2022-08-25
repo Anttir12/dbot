@@ -33,6 +33,7 @@ env = environ.Env(
     DATABASE_PORT=(int, 5432),
     CONSTANCE_REDIS_URL=(str, 'redis://localhost:6379/8'),
     BOT_REDIS_URL=(str, 'redis://localhost:6379/7'),
+    CHANNELS_REDIS_URL=(str, 'redis://localhost:6379/6'),
     STATIC_ROOT=(str, os.path.join(BASE_DIR, 'static/')),
     COMMAND_PREFIX=(str, "!"),
     DISCORD_TOKEN=(str, ""),
@@ -41,8 +42,6 @@ env = environ.Env(
     FFMPEG_PATH=(str, "ffmpeg"),
     FFPROBE_PATH=(str, "ffprobe"),
     AZURE_KEY=(str, ""),
-    CHANNELS_REDIS_IP=(str, "localhost"),
-    CHANNELS_REDIS_PORT=(int, "6379"),
 )
 environ.Env.read_env()
 
@@ -117,7 +116,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [(env("CHANNELS_REDIS_IP"), env("CHANNELS_REDIS_PORT"))],
+            "hosts": [(env("CHANNELS_REDIS_URL"))],
         },
     },
 }
