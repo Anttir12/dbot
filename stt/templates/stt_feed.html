@@ -11,7 +11,7 @@
         const sttToken = JSON.parse(document.getElementById('stt-token').textContent);
 
         const sttSocket = new WebSocket(
-            'ws://'
+            'wss://'
             + window.location.host
             + '/ws/stt/feed/'
             + sttToken
