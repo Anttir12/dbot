@@ -9,6 +9,7 @@
     {{ stt_token|json_script:"stt-token" }}
     <script>
         const sttToken = JSON.parse(document.getElementById('stt-token').textContent);
+        const feed = document.querySelector('#stt-feed');
 
         const sttSocket = new WebSocket(
             'wss://'
@@ -19,10 +20,9 @@
         );
 
         sttSocket.onmessage = function(e) {
-            console.log(e)
-
             const data = JSON.parse(e.data);
-            document.querySelector('#stt-feed').value += (`${data.type} - ${data.text} \n`);
+            feed.value += (`${data.type} - ${data.text} \n`);
+            feed.scrollTop = feed.scrollHeight;
         };
 
         sttSocket.onclose = function(e) {
