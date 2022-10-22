@@ -70,7 +70,7 @@ async def ow_event(hero: models.OwEventSoundEffect.Hero, event: models.OwEventSo
             event=event, team=team).select_related("sound_effect"))
     if ow_events:
         event = random.choice(ow_events)
-        logger.info(f"Playing {event.file} which was triggered by ow_event {event} {team} {hero}")
+        logger.info(f"Playing {event.sound_effect.name} which was triggered by ow_event {event} {team} {hero}")
         if override:
             play_sound_now(event.sound_effect)
         else:

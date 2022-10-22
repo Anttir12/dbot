@@ -150,6 +150,8 @@ class OwEventSoundEffect(models.Model):
         QUINTUPLE_KILL = "quintuple_kill"
         SEXTUPLE_KILL = "sextuple_kill"
         TEAM_KILL = "team_kill"
+        HOOK_KILL = "hook_kill"
+        CRITICAL_HIT = "critical_hit"
 
     class Team(models.TextChoices):
         RED = "red"
@@ -166,8 +168,10 @@ class OwEventSoundEffect(models.Model):
         ECHO = "Echo"
         GENJI = "Genji"
         HANZO = "Hanzo"
+        JUNKERQUEEN = "Junkerqueen"
         JUNKRAT = "Junkrat"
         LUCIO = "Lucio"
+        KIRIKO = "Kiriko"
         MCREE = "Mcree"
         MEI = "Mei"
         MERCY = "Mercy"
@@ -179,6 +183,7 @@ class OwEventSoundEffect(models.Model):
         ROADHOG = "Roadhog"
         SIGMA = "Sigma"
         SOLDIER = "Soldier"
+        SOJOURN = "Sojourn"
         SOMBRA = "Sombra"
         SYMMETRA = "Symmetra"
         TORBJORN = "Torbjorn"
