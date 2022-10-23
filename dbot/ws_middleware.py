@@ -5,7 +5,6 @@ from channels.security.websocket import WebsocketDenier
 from django.conf import settings
 
 
-
 class MultiPathMiddleware:
 
     def __init__(self, app):

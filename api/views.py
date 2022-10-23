@@ -17,8 +17,8 @@ from rest_framework.views import APIView
 from api import custom_permissions
 from api import api_utils
 from api.serializers import SoundEffectSerializer, FavouritesSerializer, SoundEffectFromYTSerializer, \
-    PlayBotSoundSerializer, SoundEffectAudioSerializer, FavouritesMinimalSerializer, OwEventSerializer, \
-    CategorySerializer, PlayYtSerializer
+    PlayBotSoundSerializer, SoundEffectAudioSerializer, FavouritesMinimalSerializer, \
+    CategorySerializer, PlayYtSerializer, OwEventReactionSerializer
 from bot import dbot_skills
 
 from sounds import models, utils
@@ -223,4 +223,4 @@ class DiscordEventWelcome(APIView):
 
 class OwEvent(CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = OwEventSerializer
+    serializer_class = OwEventReactionSerializer

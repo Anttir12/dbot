@@ -10,6 +10,7 @@ from rest_framework.exceptions import ValidationError, APIException
 from bot import dbot_skills
 from sounds import models, utils
 from sounds.utils import YtException
+from ow import models as ow_models
 
 
 class SoundEffectSerializer(serializers.ModelSerializer):
@@ -221,36 +222,18 @@ class PlayYtSerializer(serializers.Serializer):
         return value
 
 
-class OwEventSerializer(serializers.ModelSerializer):
+class OwEventReactionSerializer(serializers.ModelSerializer):
     override = serializers.BooleanField(write_only=True, required=False, default=True)
-    hero = serializers.ChoiceField(write_only=True, choices=models.OwEventSoundEffect.Hero.choices)
-    event = serializers.ChoiceField(write_only=True, choices=models.OwEventSoundEffect.Event.choices)
-    team = serializers.ChoiceField(write_only=True, choices=models.OwEventSoundEffect.Team.choices)
+    hero = serializers.SlugRelatedField(write_only=True, slug_field="name", queryset=ow_models.Hero.objects.all())
+    event = serializers.SlugRelatedField(write_only=True, slug_field="name", queryset=ow_models.GameEvent.objects.all())
+    team = serializers.ChoiceField(write_only=True, choices=ow_models.Team.choices)
     bot = serializers.CharField(read_only=True)
 
     class Meta:
-        model = models.OwEventSoundEffect
+        model = ow_models.EventReaction
         fields = ("hero", "event", "team", "override", "bot")
 
     def create(self, validated_data):
         async_to_sync(dbot_skills.ow_event)(validated_data["hero"], validated_data["event"], validated_data["team"],
                                             validated_data["override"])
         return {"bot": "ok"}
-
-    def validate_team(self, value):
-        try:
-            return models.OwEventSoundEffect.Team(value)
-        except ValueError as e:
-            raise ValidationError(f"{value} not a valid team") from e
-
-    def validate_event(self, value):
-        try:
-            return models.OwEventSoundEffect.Event(value)
-        except ValueError as e:
-            raise ValidationError(f"{value} not a valid event") from e
-
-    def validate_hero(self, value):
-        try:
-            return models.OwEventSoundEffect.Hero(value)
-        except ValueError as e:
-            raise ValidationError(f"{value} not a valid hero") from e

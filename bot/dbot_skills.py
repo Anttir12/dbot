@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.conf import settings
 
 from sounds import utils, models
+from ow import models as ow_models
 
 logger = logging.getLogger(__name__)
 
@@ -60,21 +61,20 @@ async def greetings_joining_voice():
         play_only_if_not_playing(event.sound_effect)
 
 
-async def ow_event(hero: models.OwEventSoundEffect.Hero, event: models.OwEventSoundEffect.Event,
-                   team: models.OwEventSoundEffect.Team, override: bool = True):
-
-    ow_events = await sync_to_async(list)(models.OwEventSoundEffect.objects.filter(
-        hero=hero, event=event, team=team).select_related("sound_effect"))
-    if not ow_events:
-        ow_events = await sync_to_async(list)(models.OwEventSoundEffect.objects.filter(
-            event=event, team=team).select_related("sound_effect"))
-    if ow_events:
-        event = random.choice(ow_events)
-        logger.info(f"Playing {event.sound_effect.name} which was triggered by ow_event {event} {team} {hero}")
+async def ow_event(hero: ow_models.Hero, event: ow_models.GameEvent, team: ow_models.Team, override: bool = True):
+    event_reaction: ow_models.EventReaction
+    event_reaction = await sync_to_async(list)(ow_models.EventReaction.objects.filter(
+        hero=hero, event=event, team=team).select_related("sound_effects").first())
+    if not event_reaction:
+        event_reaction = await sync_to_async(list)(ow_models.EventReaction.objects.filter(
+            event=event, team=team).select_related("sound_effects").first())
+    if event_reaction:
+        sound_effect: models.SoundEffect = random.choice(list(event_reaction.sound_effects.all()))
+        logger.info(f"Playing {sound_effect.name} which was triggered by ow_event {event} {team} {hero}")
         if override:
-            play_sound_now(event.sound_effect)
+            play_sound_now(sound_effect)
         else:
-            play_only_if_not_playing(event.sound_effect)
+            play_only_if_not_playing(sound_effect)
     else:
         logger.info(f"No action set for event {event} {team}")
 

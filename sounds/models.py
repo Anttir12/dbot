@@ -141,69 +141,6 @@ class EventTriggeredSoundEffect(models.Model):
         return "{} {}".format(self.event, end)
 
 
-class OwEventSoundEffect(models.Model):
-
-    class Event(models.TextChoices):
-        DOUBLE_KILL = "double_kill"
-        TRIPLE_KILL = "triple_kill"
-        QUADRUPLE_KILL = "quadruple_kill"
-        QUINTUPLE_KILL = "quintuple_kill"
-        SEXTUPLE_KILL = "sextuple_kill"
-        TEAM_KILL = "team_kill"
-        HOOK_KILL = "hook_kill"
-        CRITICAL_HIT = "critical_hit"
-
-    class Team(models.TextChoices):
-        RED = "red"
-        BLUE = "blue"
-
-    class Hero(models.TextChoices):
-        ANA = "Ana"
-        ASHE = "Ashe"
-        BAPTISTE = "Baptiste"
-        BASTION = "Bastion"
-        BRIGITTE = "Brigitte"
-        DOOMFIST = "Doomfist"
-        DVA = "Dva"
-        ECHO = "Echo"
-        GENJI = "Genji"
-        HANZO = "Hanzo"
-        JUNKERQUEEN = "Junkerqueen"
-        JUNKRAT = "Junkrat"
-        LUCIO = "Lucio"
-        KIRIKO = "Kiriko"
-        MCREE = "Mcree"
-        MEI = "Mei"
-        MERCY = "Mercy"
-        MOIRA = "Moira"
-        ORISA = "Orisa"
-        PHARAH = "Pharah"
-        REAPER = "Reaper"
-        REINHARDT = "Reinhardt"
-        ROADHOG = "Roadhog"
-        SIGMA = "Sigma"
-        SOLDIER = "Soldier"
-        SOJOURN = "Sojourn"
-        SOMBRA = "Sombra"
-        SYMMETRA = "Symmetra"
-        TORBJORN = "Torbjorn"
-        TRACER = "Tracer"
-        WIDOWMAKER = "Widowmaker"
-        WINSTON = "Winston"
-        WRECKINGBALL = "Wreckingball"
-        ZARYA = "Zarya"
-        ZENYATTA = "Zenyatta"
-
-    event = models.CharField(choices=Event.choices, max_length=64, null=False)
-    hero = models.CharField(choices=Hero.choices, max_length=64, null=True, blank=True)
-    team = models.CharField(choices=Team.choices, max_length=64, null=False)
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    sound_effect = models.ForeignKey(SoundEffect, on_delete=models.CASCADE, null=False)
-
-    def __str__(self):
-        return f'{self.event.replace("_", " ")} by team {self.team}'
-
-
 class SoundEffectPlayHistory(models.Model):
 
     class Meta:

@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'sounds.apps.SoundsConfig',
     'bot.apps.BotConfig',
     'stt.apps.SttConfig',
+    'ow.apps.OwConfig',
     'crispy_forms',
     'django_extensions',
     'django_cleanup.apps.CleanupConfig',
