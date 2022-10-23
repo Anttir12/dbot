@@ -63,20 +63,23 @@ async def greetings_joining_voice():
 
 async def ow_event(hero: ow_models.Hero, event: ow_models.GameEvent, team: ow_models.Team, override: bool = True):
     event_reaction: ow_models.EventReaction
-    event_reaction = await sync_to_async(list)(ow_models.EventReaction.objects.filter(
-        hero=hero, event=event, team=team).select_related("sound_effects").first())
+    base_query = ow_models.EventReaction.objects.filter(event=event, team=team).prefetch_related("sound_effects")
+    hero_query = base_query.filter(hero=hero)
+    event_reaction = await sync_to_async(hero_query.first)()
+    # IF there is no hero specific query. Try without
     if not event_reaction:
-        event_reaction = await sync_to_async(list)(ow_models.EventReaction.objects.filter(
-            event=event, team=team).select_related("sound_effects").first())
-    if event_reaction:
+        event_reaction = await sync_to_async(base_query.first)()
+    if event_reaction and event_reaction.sound_effects.exists():
         sound_effect: models.SoundEffect = random.choice(list(event_reaction.sound_effects.all()))
         logger.info(f"Playing {sound_effect.name} which was triggered by ow_event {event} {team} {hero}")
         if override:
             play_sound_now(sound_effect)
         else:
             play_only_if_not_playing(sound_effect)
+        return True
     else:
-        logger.info(f"No action set for event {event} {team}")
+        logger.info(f"No action set for event {event} {team} {hero}")
+        return False
 
 
 def add_to_queue_and_play(sound: models.Playable, volume=None):

@@ -13,6 +13,7 @@ from api.tests import mocked_redis
 from api.tests.test import DbotApiTest
 from sounds.models import SoundEffect, EventTriggeredSoundEffect, WELCOME, DiscordUser
 from bot.dbot_skills import SOUND_QUEUE, SOUND_OVERRIDE, BOT_STATUS
+from ow import models as ow_models
 
 
 @patch("bot.dbot_skills.r", mocked_redis.r)
@@ -110,3 +111,32 @@ class BotActionTest(DbotApiTest):
             "timestamp": now.isoformat()
         })
         self.assertEqual(response.json(), {"bot": "ok"})
+
+    def test_ow_event_with_hero_without_event_with_hero(self):
+        hero_name = "Ana"
+        event_name = "double_kill"
+        team = ow_models.Team.BLUE
+        reaction: ow_models.EventReaction = ow_models.EventReaction.objects.get(event__name=event_name, team=team.value)
+        reaction.sound_effects.add(self.se1)
+        response = self.client.post(reverse("api:ow_event"),
+                                    data={"hero": hero_name, "event": event_name, "team": team})
+        self.assertTrue(200 <= response.status_code < 300)
+        self.assertEqual({"event_triggered": True}, response.json())
+
+    def test_ow_event_missing_hero(self):
+        event_name = "double_kill"
+        team = ow_models.Team.BLUE
+        reaction: ow_models.EventReaction = ow_models.EventReaction.objects.get(event__name=event_name, team=team.value)
+        reaction.sound_effects.add(self.se1)
+        response = self.client.post(reverse("api:ow_event"), data={"event": event_name, "team": team})
+        self.assertTrue(200 <= response.status_code < 300)
+        self.assertEqual({"event_triggered": True}, response.json())
+
+    def test_ow_event_blank_hero(self):
+        event_name = "double_kill"
+        team = ow_models.Team.BLUE
+        reaction: ow_models.EventReaction = ow_models.EventReaction.objects.get(event__name=event_name, team=team.value)
+        reaction.sound_effects.add(self.se1)
+        response = self.client.post(reverse("api:ow_event"), data={"hero": "", "event": event_name, "team": team})
+        self.assertTrue(200 <= response.status_code < 300)
+        self.assertEqual({"event_triggered": True}, response.json())

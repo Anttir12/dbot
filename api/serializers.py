@@ -224,16 +224,19 @@ class PlayYtSerializer(serializers.Serializer):
 
 class OwEventReactionSerializer(serializers.ModelSerializer):
     override = serializers.BooleanField(write_only=True, required=False, default=True)
-    hero = serializers.SlugRelatedField(write_only=True, slug_field="name", queryset=ow_models.Hero.objects.all())
+    hero = serializers.SlugRelatedField(write_only=True, slug_field="name", queryset=ow_models.Hero.objects.all(),
+                                        required=False)
     event = serializers.SlugRelatedField(write_only=True, slug_field="name", queryset=ow_models.GameEvent.objects.all())
-    team = serializers.ChoiceField(write_only=True, choices=ow_models.Team.choices)
-    bot = serializers.CharField(read_only=True)
+    team = serializers.ChoiceField(write_only=True, choices=ow_models.Team.choices, required=False)
+    event_triggered = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = ow_models.EventReaction
-        fields = ("hero", "event", "team", "override", "bot")
+        fields = ("hero", "event", "team", "override", "event_triggered")
 
     def create(self, validated_data):
-        async_to_sync(dbot_skills.ow_event)(validated_data["hero"], validated_data["event"], validated_data["team"],
-                                            validated_data["override"])
-        return {"bot": "ok"}
+        hero = validated_data.get("hero")
+        event = validated_data.get("event")
+        team = validated_data.get("team")
+        success = async_to_sync(dbot_skills.ow_event)(hero, event, team, validated_data["override"])
+        return {"event_triggered": success}
