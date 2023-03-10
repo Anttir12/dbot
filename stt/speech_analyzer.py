@@ -1,12 +1,12 @@
-import datetime
 import queue
 import random
+import string
 import subprocess
 import logging
 import threading
 import time
 from queue import Queue
-from typing import Optional, Collection, List, Set
+from typing import Optional, Collection, List, Set, Callable
 
 import azure.cognitiveservices.speech as speechsdk
 from asgiref.sync import async_to_sync
@@ -18,7 +18,7 @@ from django.conf import settings
 from bot import dbot_skills
 from sounds import models as sound_models
 from stt import models
-
+from stt.chat_bot import ChatBot
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ class AnyPhrase:
 
 class SttAnalyzer:
 
-    def __init__(self, channel_layer=None, token: str = None):
+    def __init__(self, channel_layer=None, token: str = None, send: Callable = None):
         self.input_data: Optional[bytes] = None
         self.last_read = None
         self.empty_frames = 0
@@ -61,6 +61,7 @@ class SttAnalyzer:
         self.reactions: Collection[AnyPhrase] = self._unpack_reaction_models(reaction_models)
         self.channel_layer = channel_layer
         self.token = token
+        self.chat_bot = ChatBot(send_speech_bytes=send, channel_layer=channel_layer, token=token)
         if self.channel_layer and not self.token:
             raise ValueError("Token required with channel layer")
 
@@ -74,7 +75,7 @@ class SttAnalyzer:
         logger.info("Input reader started!")
 
         command = [
-            'ffmpeg',
+            settings.FFMPEG_PATH,
             '-loglevel', 'quiet',
             '-f', 'ogg',
             '-i', 'pipe:',
@@ -91,6 +92,7 @@ class SttAnalyzer:
             frame = None
             if self.end:
                 logger.info("ENDING THIS")
+                process.kill()
                 break
 
             now = time.time()
@@ -107,7 +109,6 @@ class SttAnalyzer:
                     frame = BLANK_FRAME
 
             if frame:
-                logger.info(f"{datetime.datetime.now()}  Writing data!!")
                 process.stdin.write(frame)
                 process.stdin.flush()
             else:
@@ -131,10 +132,7 @@ class SttAnalyzer:
 
     @staticmethod
     def split_into_phrases(text: str, max_size: Optional[int] = None):
-        text = text.replace("?", "")
-        text = text.replace(",", "")
-        text = text.replace(".", "")
-        text = text.lower()
+        text.translate(str.maketrans('', '', string.punctuation)).lower()
         words = text.split()
         final_phrases = []
         word_count = len(words)
@@ -177,22 +175,25 @@ class SttAnalyzer:
 
         def recognizing(evt: SpeechRecognitionEventArgs):
             analyse(evt)
+            print(f"Recognizing: {evt.result.text}")
             if self.channel_layer:
                 async_to_sync(self.channel_layer.group_send)(self.token, {'type': 'recognizing',
                                                                           'text': evt.result.text})
 
         def recognized(evt: SpeechRecognitionEventArgs):
             analyse(evt)
+            print(f"recognized: {evt.result.text}")
+            # This is a blocking call. It is intentional. This way the bot won't process something until the previous is
+            # done processing. Does not seem to cause any problems
+            self.chat_bot.chat(evt.result.text)
             if self.channel_layer:
                 async_to_sync(self.channel_layer.group_send)(self.token, {'type': 'recognized',
                                                                           'text': evt.result.text})
 
         def analyse(evt: SpeechRecognitionEventArgs):
             tokenized_text = self.split_into_phrases(evt.result.text)
-            logger.info(tokenized_text)
             for reaction in self.reactions:
                 if reaction.match(tokenized_text):
-                    logger.info("IT WAS A MATCH!!!")
                     sound = random.choice(reaction.sounds)
                     async_to_sync(dbot_skills.play_sound)(sound)
 

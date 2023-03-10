@@ -1,1 +1,1 @@
-DJANGO_SETTINGS_MODULE=dbot.no_bot_settings pylint --load-plugins pylint_django -j 8 {api,bot,dbot,sounds}
+DJANGO_SETTINGS_MODULE=dbot.settings pylint --load-plugins pylint_django -j 8 {api,bot,dbot,sounds,stt,ow}

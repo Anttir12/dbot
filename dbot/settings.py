@@ -42,6 +42,7 @@ env = environ.Env(
     FFMPEG_PATH=(str, "ffmpeg"),
     FFPROBE_PATH=(str, "ffprobe"),
     AZURE_KEY=(str, ""),
+    OPENAPI_KEY=(str, ""),
 )
 environ.Env.read_env()
 
@@ -236,6 +237,10 @@ if not DEBUG:
 
 # CONSTANCE
 
+_chatgpt_start_conversation_words = ["keskustelu", "keskustella", "keskusta"]
+_start_conversation_phrases = ";".join([f"aloita {phrase}" for phrase in _chatgpt_start_conversation_words])
+_stop_conversation_phrases = ";".join([f"lopeta {phrase}" for phrase in _chatgpt_start_conversation_words])
+
 CONSTANCE_REDIS_CONNECTION = env('CONSTANCE_REDIS_URL')
 
 CONSTANCE_ADDITIONAL_FIELDS = {
@@ -243,12 +248,29 @@ CONSTANCE_ADDITIONAL_FIELDS = {
         'validators': [MaxValueValidator(10), MinValueValidator(1)]
     }]
 }
+
 CONSTANCE_CONFIG = {
-    "MAX_QUEUE_SIZE": (3, "Max queue size for sound effects", "min_1_max_10"),
-    "SOUNDS_ONLY_FROM_CHANNEL": (False, "Sound effects can only be triggered by users from the "
-                                        "same channel as bot (NYI)"),
+    "MAX_QUEUE_SIZE": (5, "Max queue size for sound effects", "min_1_max_10"),
+    # "SOUNDS_ONLY_FROM_CHANNEL": (False, "Sound effects can only be triggered by users from the "
+    #                                     "same channel as bot (NYI)"),
+    "CHATGPT_SYSTEM_MESSAGE": ("You are a helpful assistant", "This is the system message for the chat-gpt. This can "
+                                                              "be used to instruct the bot to behave in a certain way"),
+    "CHATGPT_TRIGGER_PHRASE": ("ei ankka", "If this phrase is detected while listening, everything coming after it "
+                                           "(in a single recognition) will be sent to chat-gpt. Separate with \";\" "
+                                           "for multiple trigger phrases."),
+    "CHATGPT_START_CONVERSATION": (_start_conversation_phrases, "Phrase to enable conversation mode for the user. "
+                                                                "Separate with \";\" for multiple phrases"),
+    "CHATGPT_STOP_CONVERSATION": (_stop_conversation_phrases, "Phrase to disable conversation mode for the user. "
+                                                              "Separate with \";\" for multiple phrases"),
+    "CHATGPT_TRIGGER_PHRASE_ACKNOWLEDGEMENT": ("Hetkinen", "What the bot will say to acknowledge that the message was "
+                                                           "received and is processing answer"),
+    "CHATGPT_CONVERSATION_MODE_DISABLED": ("Keskustelu moodi sammutettu", "Message to indicate conversation mode was "
+                                                                          "disabled"),
+    "CHATGPT_CONVERSATION_MODE_ENABLED": ("Keskustelu moodi aloitettu", "Message to indicate conversation mode was "
+                                                                        "enabled"),
 }
 
 AZURE_KEY = env("AZURE_KEY")
+OPENAPI_KEY = env("OPENAPI_KEY")
 
 BOT_REDIS_URL = env("BOT_REDIS_URL")

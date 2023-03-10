@@ -4,6 +4,7 @@ import random
 import redis
 
 from asgiref.sync import sync_to_async
+from constance import config
 from django.utils import timezone
 from django.conf import settings
 
@@ -16,7 +17,6 @@ logger = logging.getLogger(__name__)
 r = redis.StrictRedis.from_url(settings.BOT_REDIS_URL, decode_responses=True)
 SOUND_QUEUE = "SOUND_QUEUE"
 DEFAULT_VOLUME = "DEFAULT_VOLUME"
-MAX_QUEUE_LENGTH = 5
 BOT_STATUS = "BOT_STATUS"
 SOUND_OVERRIDE = "SOUND_OVERRIDE"
 
@@ -92,7 +92,7 @@ def add_sound_to_queue(sound: models.Playable, volume=None):
         volume = r.get(DEFAULT_VOLUME)
 
     queue_length = r.llen(SOUND_QUEUE)
-    if queue_length < MAX_QUEUE_LENGTH:
+    if queue_length < config.MAX_QUEUE_SIZE:
         sound_json = _create_sound_json(sound, volume)
         r.rpush(SOUND_QUEUE, sound_json)
         return True
