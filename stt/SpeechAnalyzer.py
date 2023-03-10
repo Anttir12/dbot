@@ -92,7 +92,7 @@ class SttAnalyzer:
             frame = None
             if self.end:
                 logger.info("ENDING THIS")
-                process.kill()
+                process.kill()  # KEEP THIS!
                 break
 
             now = time.time()
@@ -168,6 +168,7 @@ class SttAnalyzer:
         speech_config.speech_recognition_language = "fi-FI"
         speech_config.set_profanity(ProfanityOption.Raw)
         speech_config.output_format = OutputFormat.Detailed
+        speech_config.set_property(speechsdk.PropertyId.Speech_LogFilename, "SpeechLog")
 
         # setup the audio stream
         stream = speechsdk.audio.PushAudioInputStream()
