@@ -1,4 +1,5 @@
 import datetime
+import os
 import queue
 import random
 import subprocess
@@ -119,10 +120,15 @@ class SttAnalyzer:
         try:
             while True:
                 output_data = process.stdout.read(CHUNK_SIZE)
+                os.kill(process.pid, 0)
                 if len(output_data) > 0:
+                    logger.info("push_stream_writer wrote {} bytes".format(len(output_data)))
                     stream.write(output_data)
                 elif self.end:
+                    logger.info("push_stream_writer end")
                     break
+                else:
+                    logger.info("push_stream_writer else")
         except Exception as exception:
             logger.info("Error in push_stream_writer")
             raise exception
