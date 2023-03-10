@@ -60,6 +60,7 @@ CSRF_TRUSTED_ORIGINS = ['https://*.devduck.fi']
 
 # Application definition
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -115,7 +116,7 @@ ASGI_APPLICATION = 'dbot.asgi.application'
 
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'BACKEND': 'channels_redis.pubsub.RedisPubSubChannelLayer',
         'CONFIG': {
             "hosts": [(env("CHANNELS_REDIS_URL"))],
         },

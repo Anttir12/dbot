@@ -9,7 +9,7 @@ from typing import Optional
 from urllib.parse import urlparse, parse_qs
 
 import magic
-import youtube_dl
+from yt_dlp import YoutubeDL
 from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
@@ -103,25 +103,29 @@ def get_stream(yt_url) -> CachedStream:
 
 
 def download_stream_and_cache_it(yt_url, yt_id) -> CachedStream:
-    with youtube_dl.YoutubeDL() as ydl:
+    with YoutubeDL() as ydl:
         info_dict = ydl.extract_info(yt_url, download=False)
         video_title: str = info_dict.get('title', "title_not_found")
         video_title = video_title.replace(" ", "_").replace("&", "_")
 
-    source = '/tmp/streams/{}.mp3'.format(video_title)
+    outtmpl = '/tmp/streams/{}.%(ext)s'.format(video_title)
+
     ydl_opts = {
         'format': 'bestaudio/best',
-        'outtmpl': source,
+        'outtmpl': outtmpl,
         'restrictfilenames': True,
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
             'preferredquality': '192',
         }],
-        'logger': logger
+        'logger': logger,
     }
-    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+    with YoutubeDL(ydl_opts) as ydl:
         ydl.download([yt_url])
+        print("test")
+
+    source = outtmpl % {'ext': "mp3"}
     size = os.path.getsize(source)
     with open(source, 'rb') as ytaudio:
         ytaudio.seek(0)

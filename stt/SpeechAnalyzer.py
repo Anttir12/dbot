@@ -10,7 +10,8 @@ from typing import Optional, Collection, List, Set
 
 import azure.cognitiveservices.speech as speechsdk
 from asgiref.sync import async_to_sync
-from azure.cognitiveservices.speech import ProfanityOption, SpeechRecognitionEventArgs, OutputFormat
+from azure.cognitiveservices.speech import ProfanityOption, SpeechRecognitionEventArgs, OutputFormat, \
+    SpeechRecognitionCanceledEventArgs
 from azure.cognitiveservices.speech.audio import PushAudioInputStream
 from django.conf import settings
 
@@ -199,7 +200,13 @@ class SttAnalyzer:
         speech_recognizer.recognized.connect(recognized)
         speech_recognizer.session_started.connect(lambda evt: logger.info('SESSION STARTED: {}'.format(evt)))
         speech_recognizer.session_stopped.connect(session_stopped_cb)
-        speech_recognizer.canceled.connect(lambda evt: logger.info('CANCELED {}'.format(evt)))
+
+        def cancelled(evt: SpeechRecognitionCanceledEventArgs):
+            logger.info('CANCELED {}'.format(evt))
+            print(evt.__dict__)
+            print(evt.cancellation_details)
+
+        speech_recognizer.canceled.connect(cancelled)
 
         # start push stream writer thread
         push_stream_writer_thread = threading.Thread(target=self.push_stream_writer, args=[process, stream])

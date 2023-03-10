@@ -16,9 +16,8 @@ from dbot.ws_middleware import MultiPathMiddleware
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dbot.settings')
 
-django_asgi_app = get_asgi_application()
 application = ProtocolTypeRouter({
-    "http": django_asgi_app,
+    "http": get_asgi_application(),
     "websocket": MultiPathMiddleware(
         URLRouter(
                 stt.routing.websocket_urlpatterns
