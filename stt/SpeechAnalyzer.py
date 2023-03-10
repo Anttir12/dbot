@@ -219,11 +219,15 @@ class SttAnalyzer:
         push_stream_writer_thread.start()
 
         # start continuous speech recognition
+        logger.info("Starting continuous recognition")
         speech_recognizer.start_continuous_recognition()
 
         # wait until all input processed
         recognition_done.wait()
+        logger.info("All input processed")
 
         # stop recognition and clean up
         speech_recognizer.stop_continuous_recognition()
+        logger.info("Stopped continuous recognition")
         push_stream_writer_thread.join()
+        logger.info("Azure is doned")
