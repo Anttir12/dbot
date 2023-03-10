@@ -92,6 +92,7 @@ class SttAnalyzer:
             frame = None
             if self.end:
                 logger.info("ENDING THIS")
+                process.kill()
                 break
 
             now = time.time()
@@ -134,6 +135,7 @@ class SttAnalyzer:
             raise exception
         finally:
             stream.close()  # must be done to signal the end of stream
+        logger.info("push_stream_writer ended!")
 
     @staticmethod
     def split_into_phrases(text: str, max_size: Optional[int] = None):
