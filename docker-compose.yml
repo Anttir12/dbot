@@ -27,6 +27,13 @@ services:
     volumes:
       - ~/dbot_data/uploads:/app/uploads
 
+  chatduck:
+    image: chatduck:latest
+    command: node dist/index.js
+    restart: unless-stopped
+    env_file:
+      - dbot/chatduck.env
+
   redis:
     image: redis
 
