@@ -182,13 +182,15 @@ class SttAnalyzer:
 
         def recognized(evt: SpeechRecognitionEventArgs):
             analyse(evt)
-            print(f"recognized: {evt.result.text}")
+            text = evt.result.text
+            print(f"recognized: {text}")
             if self.channel_layer:
                 async_to_sync(self.channel_layer.group_send)(self.token, {'type': 'recognized',
-                                                                          'text': evt.result.text})
-            # This is a blocking call. It is intentional. This way the bot won't process something until the previous is
-            # done processing. Does not seem to cause any problems
-            self.chat_bot.chat(evt.result.text)
+                                                                          'text': text})
+            if text.strip():
+                # This is a blocking call. It is intentional. This way the bot won't process something until the
+                # previous is done processing. Does not seem to cause any problems
+                self.chat_bot.chat(text)
 
         def analyse(evt: SpeechRecognitionEventArgs):
             tokenized_text = self.split_into_phrases(evt.result.text)
