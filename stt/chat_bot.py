@@ -1,5 +1,5 @@
 import logging
-import pprint
+import math
 from typing import Callable, Optional
 
 import openai
@@ -7,7 +7,6 @@ import redis
 from asgiref.sync import async_to_sync
 from constance import config
 from django.conf import settings
-from django.utils.encoding import force_str
 
 from stt.speech_synthesis import SpeechSynthesis
 
@@ -28,9 +27,8 @@ class ChatBot:
         self._conversation_mode = False
         self._start_conversation_mode_phrase = config.CHATGPT_START_CONVERSATION.split(";")
         self._stop_conversation_mode_phrase = config.CHATGPT_STOP_CONVERSATION.split(";")
-        self._ack_response: Optional[bytes] = None
-        if ack_text := getattr(config, "CHATGPT_TRIGGER_PHRASE_ACKNOWLEDGEMENT", None):
-            self._ack_response = self.speech_synthesis.text_to_speech(ack_text)
+        with open("acksound.opus", "rb") as ackfile:
+            self._ack_response: Optional[bytes] = ackfile.read()
         self._enable_conversation_voice: Optional[bytes] = None
         self._disable_conversation_voice: Optional[bytes] = None
 
@@ -89,18 +87,37 @@ class ChatBot:
                 response = openai.ChatCompletion.create(
                     model="gpt-3.5-turbo",
                     messages=messages,
+                    stream=True
                 )
-                response_text: str = force_str(response["choices"][0]["message"]["content"])
-                messages.append({"role": "assistant", "content": response_text})
-                pprint.pprint(messages)
-                r.rpush(CHATBOT_MESSAGES, f"assistant|{response_text}")
+                entire_response = ""
+                chunk_for_voice = ""
+                minimum_word_count = 1
+                for chunk in response:
+                    if content := chunk["choices"][0]["delta"].get("content"):
+                        chunk_for_voice += content
+                        chunk_word_count = len(chunk_for_voice.split(" "))
+                        char_offset = len(" ".join(chunk_for_voice.split(" ", minimum_word_count)[:minimum_word_count]))
+                        entire_response += content
+                        if chunk_word_count > minimum_word_count:
+                            for i, c in enumerate(chunk_for_voice[char_offset:]):
+                                i += char_offset
+                                if c in ".,!?;:":
+                                    to_send = chunk_for_voice[:i+1]
+                                    minimum_word_count = min(64, math.ceil(len(to_send.split(" ")) * 1.5))
+                                    chunk_for_voice = chunk_for_voice[i+1:]
+                                    speech_bytes = self.speech_synthesis.text_to_speech(to_send)
+                                    self.send_speech_bytes(speech_bytes)
+                                    break
+                if len(chunk_for_voice) > 1:
+                    speech_bytes = self.speech_synthesis.text_to_speech(chunk_for_voice)
+                    self.send_speech_bytes(speech_bytes)
+                messages.append({"role": "assistant", "content": entire_response})
+                r.rpush(CHATBOT_MESSAGES, f"assistant|{entire_response}")
                 r.expire(CHATBOT_MESSAGES, 300)
-                logger.info("ChatGTP responded with: {}".format(response_text))
+                logger.info("ChatGTP responded with: {}".format(entire_response))
                 if self.channel_layer and self.token:
                     async_to_sync(self.channel_layer.group_send)(self.token, {
-                        'type': 'chatgpt', 'text': response_text})
-                speech_bytes = self.speech_synthesis.text_to_speech(response_text)
-                self.send_speech_bytes(speech_bytes)
+                        'type': 'chatgpt', 'text': entire_response})
                 return True
             except Exception as e:
                 logger.error("Something went wrong")

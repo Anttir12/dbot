@@ -8,11 +8,15 @@ from django.conf import settings
 SSML = """
 <speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts"
 xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US">
-<voice name="fi-FI-SelmaNeural">
-<mstts:silence type="Sentenceboundary-exact" value="300ms"/>
-<prosody rate="{rate}%" pitch="{pitch}%">
-{text}
-</prosody></voice></speak>
+    <voice name="fi-FI-SelmaNeural">
+        <mstts:silence type="Sentenceboundary-exact" value="300ms"/>
+        <mstts:silence type="Leading-exact" value="50ms"/>
+        <mstts:silence type="Tailing-exact" value="50ms"/>
+        <prosody rate="{rate}%" pitch="{pitch}%">
+        {text}
+        </prosody>
+    </voice>
+</speak>
 """
 
 

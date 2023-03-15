@@ -175,7 +175,6 @@ class SttAnalyzer:
 
         def recognizing(evt: SpeechRecognitionEventArgs):
             analyse(evt)
-            print(f"Recognizing: {evt.result.text}")
             if self.channel_layer:
                 async_to_sync(self.channel_layer.group_send)(self.token, {'type': 'recognizing',
                                                                           'text': evt.result.text})
