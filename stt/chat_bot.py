@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class ChatBot:
 
     def __init__(self, send_speech_bytes: Callable, channel_layer, token):
-        self.keyword = config.CHATGPT_TRIGGER_PHRASE
+        self.keywords = config.CHATGPT_TRIGGER_PHRASE.split(";")
         self.speech_synthesis = SpeechSynthesis()
         self.send_speech_bytes = send_speech_bytes
         self.channel_layer = channel_layer
@@ -64,10 +64,12 @@ class ChatBot:
 
         send_to_chat_gpt = self.conversation_mode
         if not send_to_chat_gpt:
-            i = text.lower().find(self.keyword)
-            if i >= 0:
-                text = text[i + len(self.keyword):]
-                send_to_chat_gpt = True
+            for keyword in self.keywords:
+                i = lowered_dotless_text.find(keyword)
+                if i >= 0:
+                    text = text[i + len(keyword):]
+                    send_to_chat_gpt = True
+                    break
 
         if not self.conversation_mode and lowered_dotless_text in self._start_conversation_mode_phrase:
             self.conversation_mode = True
