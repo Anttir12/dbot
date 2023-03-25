@@ -5,8 +5,13 @@ from typing import Optional
 from urllib import parse
 
 import channels.layers
+import openai
+import redis
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
+from constance import config
+
+from dbot import settings
 
 logger = logging.getLogger(__name__)
 
@@ -91,3 +96,49 @@ class SpeechToTextOutputConsumer(WebsocketConsumer):
             'type': 'chatgpt',
             'text': text
         }))
+
+
+class GptConsumer(WebsocketConsumer):
+
+    def __init__(self, *args, **kwargs):
+        self.r = redis.StrictRedis.from_url(settings.BOT_REDIS_URL, decode_responses=True)
+        self.gpt_messages = "chatbot:gptmessages"
+        super().__init__(*args, **kwargs)
+
+    def connect(self):
+        logger.info("GPT-4 Connection accepted!")
+        self.accept()
+
+    def send_json(self, json_message: dict):
+        self.send(json.dumps(json_message))
+
+    def receive(self, text_data: str = None, bytes_data: bytes = None):
+
+        if text_data:
+            logger.info("Sending this to GTP-4: {}".format(text_data))
+            self.r.rpush(self.gpt_messages, f"user|{text_data}")
+            gpt_messages = self.r.lrange(self.gpt_messages, 0, -1)
+            messages = [{"role": "system", "content": config.CHATGPT_SYSTEM_MESSAGE}]
+
+            for gptm in gpt_messages:
+                role, content = gptm.split("|", 1)
+                messages.append({"role": role, "content": content})
+
+            openai.api_key = settings.OPENAPI_KEY
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=messages,
+                stream=True
+            )
+            entire_response = ""
+            for chunk in response:
+                if content := chunk["choices"][0]["delta"].get("content"):
+                    entire_response += content
+                    self.send_json({"type": "chunk", "content": content})
+
+            self.send_json({"type": "end"})
+            self.r.rpush(self.gpt_messages, f"assistant|{entire_response}")
+            self.r.ltrim(self.gpt_messages, 0, 9)
+            self.r.expire(self.gpt_messages, 300)
+            messages.append(f"assistant|{entire_response}")
+            logger.info("GTP-4 responded with: {}".format(entire_response))
