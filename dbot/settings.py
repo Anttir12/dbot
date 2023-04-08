@@ -302,6 +302,24 @@ CONSTANCE_CONFIG = {
     "TEXTGPT_MEMORY_TIME": (300, "How long (seconds) text-gpt remembers previous conversation (max 10 messages)"),
 }
 
+_OTHER_FIELDS = []
+_TEXTGPT_FIELDS = []
+_VOICEGPT_FIELDS = []
+
+for f in CONSTANCE_CONFIG:
+    if f.startswith("TEXTGPT"):
+        _TEXTGPT_FIELDS.append(f)
+    elif f.startswith("VOICEGPT"):
+        _VOICEGPT_FIELDS.append(f)
+    else:
+        _OTHER_FIELDS.append(f)
+
+CONSTANCE_CONFIG_FIELDSETS = [
+    ("TEXT-CHATDUCK", _TEXTGPT_FIELDS),
+    ("VOICE-CHATDUCK", _VOICEGPT_FIELDS),
+    ("OTHER", _OTHER_FIELDS),
+]
+
 AZURE_KEY = env("AZURE_KEY")
 AZURE_CLIENT_ID = env("AZURE_CLIENT_ID")
 AZURE_CLIENT_SECRET = env("AZURE_CLIENT_SECRET")
