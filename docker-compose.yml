@@ -1,5 +1,11 @@
 version: "3.3"
 
+x-logging: &default-logging
+  options:
+    max-size: "10m"
+    max-file: "3"
+  driver: json-file
+
 services:
   dbot-web:
     image: dbot-web:latest
@@ -15,6 +21,8 @@ services:
     volumes:
       - ~/dbot_data/uploads:/app/uploads
       - /tmp:/tmp
+    logging: *default-logging
+
 
   jsdbot:
     image: jsdbot:latest
@@ -26,6 +34,7 @@ services:
       - redis
     volumes:
       - ~/dbot_data/uploads:/app/uploads
+    logging: *default-logging
 
   chatduck:
     image: chatduck:latest
@@ -33,9 +42,11 @@ services:
     restart: unless-stopped
     env_file:
       - dbot/chatduck.env
+    logging: *default-logging
 
   redis:
     image: redis
+    logging: *default-logging
 
   db:
     image: postgres:12
@@ -44,3 +55,4 @@ services:
       - dbot/.env
     volumes:
       - ~/dbot_data/db:/var/lib/postgresql/data
+    logging: *default-logging
