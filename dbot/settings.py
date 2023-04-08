@@ -42,6 +42,12 @@ env = environ.Env(
     FFMPEG_PATH=(str, "ffmpeg"),
     FFPROBE_PATH=(str, "ffprobe"),
     AZURE_KEY=(str, ""),
+    AZURE_CLIENT_ID=(str, ""),
+    AZURE_CLIENT_SECRET=(str, ""),
+    AZURE_TENANT_ID=(str, ""),
+    AZURE_SUBSCRIPTION_ID=(str, ""),
+    AZURE_RESOURCE_GROUP=(str, ""),
+    AZURE_SERVICE_ACCOUNT_NAME=(str, ""),
     OPENAPI_KEY=(str, ""),
 )
 environ.Env.read_env()
@@ -187,15 +193,27 @@ APPEND_SLASH = False
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'default': {
+            'format': '{levelname} - {asctime} [{name}] {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'default',
         },
     },
     'root': {
         'handlers': ['console'],
         'level': 'INFO',
     },
+    'loggers': {
+        'azure': {
+            'level': 'WARNING',
+        },
+    }
 }
 
 COMMAND_PREFIX = env("COMMAND_PREFIX")
@@ -243,34 +261,54 @@ _stop_conversation_phrases = ";".join([f"lopeta {phrase}" for phrase in _chatgpt
 
 CONSTANCE_REDIS_CONNECTION = env('CONSTANCE_REDIS_URL')
 
+_gpt_models = (("gpt-3.5-turbo", "GPT3.5"), ("gpt-4", "GPT4 (30x more expensive but often much better)"))
 CONSTANCE_ADDITIONAL_FIELDS = {
     'min_1_max_10': ['django.forms.fields.IntegerField', {
         'validators': [MaxValueValidator(10), MinValueValidator(1)]
-    }]
+    }],
+    'gpt_model_choices': ['django.forms.fields.ChoiceField', {
+        'widget': 'django.forms.Select',
+        'choices': _gpt_models
+    }],
 }
 
 CONSTANCE_CONFIG = {
     "MAX_QUEUE_SIZE": (5, "Max queue size for sound effects", "min_1_max_10"),
     # "SOUNDS_ONLY_FROM_CHANNEL": (False, "Sound effects can only be triggered by users from the "
     #                                     "same channel as bot (NYI)"),
-    "CHATGPT_SYSTEM_MESSAGE": ("You are a helpful assistant", "This is the system message for the chat-gpt. This can "
+
+    # VOICE GPT
+    "VOICEGPT_MODEL": (_gpt_models[0][0], "GPT model for voice-gpt", "gpt_model_choices"),
+    "VOICEGPT_SYSTEM_MESSAGE": ("You are a helpful assistant", "This is the system message for the voice-gpt. This can "
+                                                               "be used to instruct the bot to behave in a certain "
+                                                               "way"),
+    "VOICEGPT_MEMORY_TIME": (300, "How long (seconds) voice-gpt remembers previous conversation (max 10 messages)"),
+    "VOICEGPT_TRIGGER_PHRASE": ("ei ankka", "If this phrase is detected while listening, everything coming after it "
+                                            "(in a single recognition) will be sent to chat-gpt. Separate with \";\" "
+                                            "for multiple trigger phrases."),
+    "VOICEGPT_START_CONVERSATION": (_start_conversation_phrases, "Phrase to enable conversation mode for the user. "
+                                                                 "Separate with \";\" for multiple phrases"),
+    "VOICEGPT_STOP_CONVERSATION": (_stop_conversation_phrases, "Phrase to disable conversation mode for the user. "
+                                                               "Separate with \";\" for multiple phrases"),
+    "VOICEGPT_CONVERSATION_MODE_DISABLED": ("Keskustelu moodi sammutettu", "Message to indicate conversation mode was "
+                                                                           "disabled"),
+    "VOICEGPT_CONVERSATION_MODE_ENABLED": ("Keskustelu moodi aloitettu", "Message to indicate conversation mode was "
+                                                                         "enabled"),
+
+    # TEXT GPT
+    "TEXTGPT_SYSTEM_MESSAGE": ("You are a helpful assistant", "This is the system message for the text-gpt. This can "
                                                               "be used to instruct the bot to behave in a certain way"),
-    "CHATGPT_TRIGGER_PHRASE": ("ei ankka", "If this phrase is detected while listening, everything coming after it "
-                                           "(in a single recognition) will be sent to chat-gpt. Separate with \";\" "
-                                           "for multiple trigger phrases."),
-    "CHATGPT_START_CONVERSATION": (_start_conversation_phrases, "Phrase to enable conversation mode for the user. "
-                                                                "Separate with \";\" for multiple phrases"),
-    "CHATGPT_STOP_CONVERSATION": (_stop_conversation_phrases, "Phrase to disable conversation mode for the user. "
-                                                              "Separate with \";\" for multiple phrases"),
-    "CHATGPT_TRIGGER_PHRASE_ACKNOWLEDGEMENT": ("Hetkinen", "What the bot will say to acknowledge that the message was "
-                                                           "received and is processing answer"),
-    "CHATGPT_CONVERSATION_MODE_DISABLED": ("Keskustelu moodi sammutettu", "Message to indicate conversation mode was "
-                                                                          "disabled"),
-    "CHATGPT_CONVERSATION_MODE_ENABLED": ("Keskustelu moodi aloitettu", "Message to indicate conversation mode was "
-                                                                        "enabled"),
+    "TEXTGPT_MODEL": (_gpt_models[0][0], "GPT model for text-gpt", "gpt_model_choices"),
+    "TEXTGPT_MEMORY_TIME": (300, "How long (seconds) text-gpt remembers previous conversation (max 10 messages)"),
 }
 
 AZURE_KEY = env("AZURE_KEY")
+AZURE_CLIENT_ID = env("AZURE_CLIENT_ID")
+AZURE_CLIENT_SECRET = env("AZURE_CLIENT_SECRET")
+AZURE_TENANT_ID = env("AZURE_TENANT_ID")
+AZURE_SUBSCRIPTION_ID = env("AZURE_SUBSCRIPTION_ID")
+AZURE_RESOURCE_GROUP = env("AZURE_RESOURCE_GROUP")
+AZURE_SERVICE_ACCOUNT_NAME = env("AZURE_SERVICE_ACCOUNT_NAME")
 OPENAPI_KEY = env("OPENAPI_KEY")
 
 BOT_REDIS_URL = env("BOT_REDIS_URL")

@@ -19,14 +19,14 @@ logger = logging.getLogger(__name__)
 class ChatBot:
 
     def __init__(self, send_speech_bytes: Callable, channel_layer, token):
-        self.keywords = config.CHATGPT_TRIGGER_PHRASE.split(";")
+        self.keywords = config.VOICEGPT_TRIGGER_PHRASE.split(";")
         self.speech_synthesis = SpeechSynthesis()
         self.send_speech_bytes = send_speech_bytes
         self.channel_layer = channel_layer
         self.token = token
         self._conversation_mode = False
-        self._start_conversation_mode_phrase = config.CHATGPT_START_CONVERSATION.split(";")
-        self._stop_conversation_mode_phrase = config.CHATGPT_STOP_CONVERSATION.split(";")
+        self._start_conversation_mode_phrase = config.VOICEGPT_START_CONVERSATION.split(";")
+        self._stop_conversation_mode_phrase = config.VOICEGPT_STOP_CONVERSATION.split(";")
         with open("acksound.opus", "rb") as ackfile:
             self._ack_response: Optional[bytes] = ackfile.read()
         self._enable_conversation_voice: Optional[bytes] = None
@@ -44,12 +44,12 @@ class ChatBot:
         if old_mode and not mode:
             if not self._disable_conversation_voice:
                 self._disable_conversation_voice = \
-                    self.speech_synthesis.text_to_speech(config.CHATGPT_CONVERSATION_MODE_DISABLED)
+                    self.speech_synthesis.text_to_speech(config.VOICEGPT_CONVERSATION_MODE_DISABLED)
             self.send_speech_bytes(self._disable_conversation_voice)
         else:
             if not self._enable_conversation_voice:
                 self._enable_conversation_voice = \
-                    self.speech_synthesis.text_to_speech(config.CHATGPT_CONVERSATION_MODE_ENABLED)
+                    self.speech_synthesis.text_to_speech(config.VOICEGPT_CONVERSATION_MODE_ENABLED)
             self.send_speech_bytes(self._enable_conversation_voice)
 
     def chat(self, text: str):
@@ -76,7 +76,7 @@ class ChatBot:
             r.rpush(CHATBOT_MESSAGES, f"user|{text}")
             logger.info("Sending this to ChatGTP: {}".format(text))
             chatbot_messages = r.lrange(CHATBOT_MESSAGES, 0, -1)
-            messages = [{"role": "system", "content": config.CHATGPT_SYSTEM_MESSAGE}]
+            messages = [{"role": "system", "content": config.VOICEGPT_SYSTEM_MESSAGE}]
             for cbm in chatbot_messages:
                 role, content = cbm.split("|", 1)
                 messages.append({"role": role, "content": content})
@@ -85,7 +85,7 @@ class ChatBot:
                     self.send_speech_bytes(self._ack_response)
                 openai.api_key = settings.OPENAPI_KEY
                 response = openai.ChatCompletion.create(
-                    model="gpt-3.5-turbo",
+                    model=config.VOICEGPT_MODEL,
                     messages=messages,
                     stream=True
                 )
@@ -113,7 +113,7 @@ class ChatBot:
                     self.send_speech_bytes(speech_bytes)
                 messages.append({"role": "assistant", "content": entire_response})
                 r.rpush(CHATBOT_MESSAGES, f"assistant|{entire_response}")
-                r.expire(CHATBOT_MESSAGES, 300)
+                r.expire(CHATBOT_MESSAGES, config.VOICEGPT_MEMORY_TIME)
                 logger.info("ChatGTP responded with: {}".format(entire_response))
                 if self.channel_layer and self.token:
                     async_to_sync(self.channel_layer.group_send)(self.token, {

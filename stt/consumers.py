@@ -12,11 +12,12 @@ from channels.generic.websocket import WebsocketConsumer
 from constance import config
 
 from dbot import settings
+from stt import utils
 
 logger = logging.getLogger(__name__)
 
 
-class SpeechConsumer(WebsocketConsumer):
+class GptVoiceConsumer(WebsocketConsumer):
 
     def __init__(self, *args, **kwargs):
         # Having this import at the top causes problems during deployment. Apparently it tries to access settings
@@ -36,12 +37,29 @@ class SpeechConsumer(WebsocketConsumer):
         # before settings is ready
         from stt.speech_analyzer import SttAnalyzer
         logger.info("Connection accepted!")
+        logger.info("Current usage:")
+
         channel_layer = channels.layers.get_channel_layer()
         token = parse.parse_qs(self.scope['query_string'].decode('utf-8')).get('wsToken', ['-'])[0]
         self.stt = SttAnalyzer(channel_layer, token, self._send_voice)
         self.input_reader = threading.Thread(target=self.stt.input_reader)
         self.input_reader.start()
+        logger.info("Accepted")
         self.accept()
+        t = threading.Thread(target=self.check_quotas)
+        t.start()
+
+    def check_quotas(self):
+        if (usage_chars := utils.get_speech_synthesis_usage_chars()) > 480000:
+            logger.warning(f"SpeechConsumer Rejected because speech_syntheses is {usage_chars} chars")
+            logger.info("Rejected")
+            self.close()
+        if (usage_seconds := utils.get_speech_recognition_usage_seconds()) > 17500:
+            logger.warning(f"SpeechConsumer Rejected because speech_recognizition_usage is {usage_seconds} seconds")
+            logger.info("Rejected")
+            self.close()
+        logger.info(f"Synthesized chars: {usage_chars}")
+        logger.info(f"Transcribed seconds: {usage_seconds}")
 
     def disconnect(self, code):
         self.stt.end = True
@@ -98,7 +116,7 @@ class SpeechToTextOutputConsumer(WebsocketConsumer):
         }))
 
 
-class GptConsumer(WebsocketConsumer):
+class GptTextConsumer(WebsocketConsumer):
 
     def __init__(self, *args, **kwargs):
         self.r = redis.StrictRedis.from_url(settings.BOT_REDIS_URL, decode_responses=True)
@@ -118,7 +136,7 @@ class GptConsumer(WebsocketConsumer):
             logger.info("Sending this to GTP-4: {}".format(text_data))
             self.r.rpush(self.gpt_messages, f"user|{text_data}")
             gpt_messages = self.r.lrange(self.gpt_messages, 0, -1)
-            messages = [{"role": "system", "content": config.CHATGPT_SYSTEM_MESSAGE}]
+            messages = [{"role": "system", "content": config.TEXTGPT_SYSTEM_MESSAGE}]
 
             for gptm in gpt_messages:
                 role, content = gptm.split("|", 1)
@@ -126,7 +144,7 @@ class GptConsumer(WebsocketConsumer):
 
             openai.api_key = settings.OPENAPI_KEY
             response = openai.ChatCompletion.create(
-                model="gpt-4",
+                model=config.TEXTGPT_MODEL,
                 messages=messages,
                 stream=True
             )
@@ -139,6 +157,6 @@ class GptConsumer(WebsocketConsumer):
             self.send_json({"type": "end"})
             self.r.rpush(self.gpt_messages, f"assistant|{entire_response}")
             self.r.ltrim(self.gpt_messages, 0, 9)
-            self.r.expire(self.gpt_messages, 300)
+            self.r.expire(self.gpt_messages, config.TEXTGPT_MEMORY_TIME)
             messages.append(f"assistant|{entire_response}")
             logger.info("GTP-4 responded with: {}".format(entire_response))
