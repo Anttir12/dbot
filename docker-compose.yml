@@ -47,6 +47,7 @@ services:
   redis:
     image: redis
     logging: *default-logging
+    restart: unless-stopped
 
   db:
     image: postgres:12
