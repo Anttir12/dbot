@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     'stt.apps.SttConfig',
     'ow.apps.OwConfig',
     'crispy_forms',
+    'crispy_bootstrap4',
     'django_extensions',
     'django_cleanup.apps.CleanupConfig',
     'colorfield',
@@ -330,3 +331,4 @@ AZURE_SERVICE_ACCOUNT_NAME = env("AZURE_SERVICE_ACCOUNT_NAME")
 OPENAPI_KEY = env("OPENAPI_KEY")
 
 BOT_REDIS_URL = env("BOT_REDIS_URL")
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
