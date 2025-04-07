@@ -15,7 +15,7 @@ django-environ==0.11.2
 whitenoise==6.7.0
 django-colorfield==0.11.0
 django-cors-headers==4.7.0
-django-constance[redis]==4.3.2
+django-constance[redis]==3.1.0
 channels[daphne]==4.1.0
 azure-cognitiveservices-speech==1.38.0
 channels_redis==4.2.0
