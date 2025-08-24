@@ -145,7 +145,9 @@ class SoundEffectPlayHistory(models.Model):
 
     class Meta:
         # Not sure about this (First join by sound_effect -> filter by played_by -> optionally filter by date)
-        index_together = ["sound_effect", "played_by", "played_at"]
+        indexes = [
+            models.Index(fields=["sound_effect", "played_by", "played_at"], name="sound-by-at-idx")
+        ]
 
     sound_effect = models.ForeignKey(SoundEffect, on_delete=models.CASCADE, null=False, related_name="play_history")
     played_by = models.ForeignKey(User, on_delete=models.CASCADE, null=False)
