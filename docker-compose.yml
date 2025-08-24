@@ -55,5 +55,5 @@ services:
     env_file:
       - dbot/.env
     volumes:
-      - ~/dbot_data/db:/var/lib/postgresql/data
+      - ~/dbot_data/db17:/var/lib/postgresql/data
     logging: *default-logging
