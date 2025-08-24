@@ -50,7 +50,7 @@ services:
     restart: unless-stopped
 
   db:
-    image: postgres:12
+    image: postgres:17
     restart: unless-stopped
     env_file:
       - dbot/.env

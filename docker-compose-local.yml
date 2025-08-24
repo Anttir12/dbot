@@ -1,0 +1,17 @@
+services:
+
+  redis:
+    image: redis
+    restart: unless-stopped
+    ports:
+      - 6379:6379
+
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    env_file:
+      - dbot/.env
+    volumes:
+      - ~/dbot_data/db:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
